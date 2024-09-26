@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -12,11 +13,20 @@ import (
 type application struct {
 	config config
 	logger *zap.SugaredLogger
+	db     *sql.DB
 }
 
 type config struct {
 	addr string
 	env  string
+	db   dbConfig
+}
+
+type dbConfig struct {
+	addr         string
+	maxOpenConns int
+	maxIdleConns int
+	maxIdleTime  string
 }
 
 func (app *application) mount() http.Handler {
