@@ -6,6 +6,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/skiba-mateusz/communiverse/internal/db"
 	"github.com/skiba-mateusz/communiverse/internal/env"
+	"github.com/skiba-mateusz/communiverse/internal/store"
 	"go.uber.org/zap"
 )
 
@@ -40,10 +41,12 @@ func main() {
 
 	logger.Info("database connection pool established")
 
+	store := store.NewStorage(db)
+
 	app := &application{
 		config: cfg,
 		logger: logger,
-		db:     db,
+		store:  store,
 	}
 
 	mux := app.mount()

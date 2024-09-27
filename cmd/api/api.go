@@ -1,19 +1,19 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/skiba-mateusz/communiverse/internal/store"
 	"go.uber.org/zap"
 )
 
 type application struct {
 	config config
 	logger *zap.SugaredLogger
-	db     *sql.DB
+	store  store.Storage
 }
 
 type config struct {
@@ -41,6 +41,18 @@ func (app *application) mount() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthHandler)
+
+		r.Route("/communities", func(r chi.Router) {
+			r.Post("/", app.createCommunityHandler)
+
+			r.Route("/{communitySlug}", func(r chi.Router) {
+				r.Use(app.communityContextMiddleware)
+
+				r.Get("/", app.getCommunityHandler)
+				r.Delete("/", app.deleteCommunityHandler)
+				r.Patch("/", app.updateCommunityHandler)
+			})
+		})
 	})
 
 	return r
