@@ -19,6 +19,12 @@ type Storage struct {
 		Delete(context.Context, string) error
 		Update(context.Context, *Community) error
 	}
+	Posts interface {
+		Create(context.Context, *Post) error
+		GetBySlug(context.Context, string) (*Post, error)
+		Delete(context.Context, string) error
+		Update(context.Context, *Post) error
+	}
 	Common interface {
 		GenerateUniqueSlug(context.Context, string, string) (string, error)
 	}
@@ -27,6 +33,9 @@ type Storage struct {
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
 		Communities: &CommunityStore{
+			db: db,
+		},
+		Posts: &PostStore{
 			db: db,
 		},
 		Common: &CommonStore{
