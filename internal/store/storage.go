@@ -18,6 +18,8 @@ type Storage struct {
 		GetBySlug(context.Context, string) (*Community, error)
 		Delete(context.Context, string) error
 		Update(context.Context, *Community) error
+		Join(context.Context, int64, int64) error
+		Leave(context.Context, int64, int64) error
 	}
 	Posts interface {
 		Create(context.Context, *Post) error
@@ -49,4 +51,18 @@ func NewStorage(db *sql.DB) Storage {
 			db: db,
 		},
 	}
+}
+
+func withTx(ctx context.Context, db *sql.DB, fn func(tx *sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }

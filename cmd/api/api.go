@@ -52,6 +52,9 @@ func (app *application) mount() http.Handler {
 				r.Delete("/", app.deleteCommunityHandler)
 				r.Patch("/", app.updateCommunityHandler)
 
+				r.Post("/join", app.joinCommunityHandler)
+				r.Delete("/leave", app.leaveCommunityHandler)
+
 				r.Route("/posts", func(r chi.Router) {
 					r.Post("/", app.createPostHandler)
 

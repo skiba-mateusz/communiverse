@@ -20,30 +20,17 @@ type CommunityStore struct {
 }
 
 func (s *CommunityStore) Create(ctx context.Context, community *Community) error {
-	query := `
-		INSERT INTO communities (name, description, slug, user_id)
-		VALUES ($1, $2, $3, $4) RETURNING id, created_at
-	`
+	return withTx(ctx, s.db, func(tx *sql.Tx) error {
+		if err := s.create(ctx, tx, community); err != nil {
+			return err
+		}
 
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
-	defer cancel()
+		if err := s.join(ctx, tx, community.ID, community.UserID); err != nil {
+			return err
+		}
 
-	err := s.db.QueryRowContext(
-		ctx,
-		query,
-		community.Name,
-		community.Description,
-		community.Slug,
-		community.UserID,
-	).Scan(
-		&community.ID,
-		&community.CreatedAt,
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func (s *CommunityStore) GetBySlug(ctx context.Context, slug string) (*Community, error) {
@@ -138,6 +125,114 @@ func (s *CommunityStore) Update(ctx context.Context, community *Community) error
 
 	if rows == 0 {
 		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *CommunityStore) Join(ctx context.Context, communityID, userID int64) error {
+	return withTx(ctx, s.db, func(tx *sql.Tx) error {
+		if err := s.join(ctx, tx, communityID, userID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (s *CommunityStore) Leave(ctx context.Context, communityID, userID int64) error {
+	query := `DELETE FROM user_communities WHERE user_id = $1 AND community_id = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	res, err := s.db.ExecContext(
+		ctx,
+		query,
+		userID,
+		communityID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *CommunityStore) create(ctx context.Context, tx *sql.Tx, community *Community) error {
+	query := `
+	INSERT INTO communities (name, description, slug, user_id)
+	VALUES ($1, $2, $3, $4) RETURNING id, created_at
+`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	err := tx.QueryRowContext(
+		ctx,
+		query,
+		community.Name,
+		community.Description,
+		community.Slug,
+		community.UserID,
+	).Scan(
+		&community.ID,
+		&community.CreatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *CommunityStore) join(ctx context.Context, tx *sql.Tx, communityID, userID int64) error {
+	existsQuery := `
+		SELECT EXISTS (
+			SELECT 1 FROM user_communities WHERE user_id = $1 AND community_id = $2
+		)	
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	var exists bool
+
+	err := tx.QueryRowContext(
+		ctx,
+		existsQuery,
+		userID,
+		communityID,
+	).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return nil
+	}
+
+	joinQuery := `
+		INSERT INTO user_communities (user_id, community_id) 
+		VALUES ($1, $2)
+	`
+
+	_, err = tx.ExecContext(
+		ctx,
+		joinQuery,
+		userID,
+		communityID,
+	)
+	if err != nil {
+		return err
 	}
 
 	return nil

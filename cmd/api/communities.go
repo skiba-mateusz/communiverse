@@ -129,6 +129,41 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 	}
 }
 
+func (app *application) joinCommunityHandler(w http.ResponseWriter, r *http.Request) {
+	community := getCommunityFromContext(r)
+
+	userID := 1 // TODO: repalce after auth
+
+	if err := app.store.Communities.Join(r.Context(), community.ID, int64(userID)); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (app *application) leaveCommunityHandler(w http.ResponseWriter, r *http.Request) {
+	community := getCommunityFromContext(r)
+
+	userID := 1 // TODO: repalce after auth
+
+	if userID == int(community.UserID) {
+		return
+	}
+
+	if err := app.store.Communities.Leave(r.Context(), community.ID, int64(userID)); err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (app *application) communityContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "communitySlug")
