@@ -8,10 +8,10 @@ import (
 type Comment struct {
 	ID        int64  `json:"id"`
 	Content   string `json:"content"`
-	PostID    int64  `josn:"postID"`
-	Post      Post   `json:"post"`
+	PostID    int64  `json:"postID"`
+	Post      *Post  `json:"post,omitempty"`
 	UserID    int64  `json:"userID"`
-	User      User   `json:"user"`
+	User      *User  `json:"user,omitempty"`
 	CreatedAt string `json:"createdAt"`
 }
 
@@ -49,7 +49,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comment
 	query := `
 		SELECT 
 			c.id, c.content, c.user_id, c.post_id, c.created_at, 
-			u.username
+			u.id, u.username
 		FROM comments c
 		INNER JOIN users u ON c.user_id = u.id
 		WHERE c.post_id = $1 
@@ -58,7 +58,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comment
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	var comments []Comment
+	comments := []Comment{}
 
 	rows, err := s.db.QueryContext(
 		ctx,
@@ -66,11 +66,13 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comment
 		postID,
 	)
 	if err != nil {
-		return nil, err
+		return comments, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var comment Comment
+		comment.User = &User{}
 
 		if err := rows.Scan(
 			&comment.ID,
@@ -78,12 +80,17 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comment
 			&comment.UserID,
 			&comment.PostID,
 			&comment.CreatedAt,
+			&comment.User.ID,
 			&comment.User.Username,
 		); err != nil {
-			return nil, err
+			return comments, err
 		}
 
 		comments = append(comments, comment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return comments, err
 	}
 
 	return comments, nil

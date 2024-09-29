@@ -8,17 +8,17 @@ import (
 )
 
 type Post struct {
-	ID          int64     `json:"id"`
-	Title       string    `json:"title"`
-	Content     string    `json:"content"`
-	Slug        string    `json:"slug"`
-	Tags        []string  `json:"tags"`
-	Comments    []Comment `json:"comments"`
-	CommunityID int64     `json:"communityID"`
-	Community   Community `josn:"community"`
-	UserID      int64     `json:"userID"`
-	User        User      `json:"user"`
-	CreatedAt   string    `json:"createdAt"`
+	ID          int64      `json:"id"`
+	Title       string     `json:"title"`
+	Content     string     `json:"content"`
+	Slug        string     `json:"slug"`
+	Tags        []string   `json:"tags"`
+	Comments    []Comment  `json:"comments"`
+	CommunityID int64      `json:"communityID"`
+	Community   *Community `josn:"community,omitempty"`
+	UserID      int64      `json:"userID"`
+	User        *User      `json:"user,omitempty"`
+	CreatedAt   string     `json:"createdAt"`
 }
 
 type PostStore struct {
@@ -57,8 +57,8 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 func (s *PostStore) GetBySlug(ctx context.Context, slug string) (*Post, error) {
 	query := `
 		SELECT 
-			p.id, p.title, p.content, p.slug, p.tags, p.created_at,
-			u.username
+			p.id, p.title, p.content, p.slug, p.tags, p.user_id, p.community_id, p.created_at,
+			u.id, u.username
 		FROM posts p 
 		INNER JOIN users u ON u.id = p.user_id
 		WHERE p.slug = $1
@@ -68,6 +68,7 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string) (*Post, error) {
 	defer cancel()
 
 	var post Post
+	post.User = &User{}
 
 	err := s.db.QueryRowContext(
 		ctx,
@@ -79,7 +80,10 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string) (*Post, error) {
 		&post.Content,
 		&post.Slug,
 		pq.Array(&post.Tags),
+		&post.UserID,
+		&post.CommunityID,
 		&post.CreatedAt,
+		&post.User.ID,
 		&post.User.Username,
 	)
 	if err != nil {

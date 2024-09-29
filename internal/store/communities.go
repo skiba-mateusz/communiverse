@@ -11,7 +11,7 @@ type Community struct {
 	Description string `json:"description"`
 	Slug        string `json:"slug"`
 	UserID      int64  `json:"userID"`
-	User        User   `json:"user"`
+	User        *User  `json:"user,omitempty"`
 	CreatedAt   string `json:"createdAt"`
 }
 
