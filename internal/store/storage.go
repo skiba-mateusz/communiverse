@@ -25,6 +25,10 @@ type Storage struct {
 		Delete(context.Context, string) error
 		Update(context.Context, *Post) error
 	}
+	Comments interface {
+		Create(context.Context, *Comment) error
+		GetByPostID(context.Context, int64) ([]Comment, error)
+	}
 	Common interface {
 		GenerateUniqueSlug(context.Context, string, string) (string, error)
 	}
@@ -36,6 +40,9 @@ func NewStorage(db *sql.DB) Storage {
 			db: db,
 		},
 		Posts: &PostStore{
+			db: db,
+		},
+		Comments: &CommentStore{
 			db: db,
 		},
 		Common: &CommonStore{

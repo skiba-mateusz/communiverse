@@ -13,6 +13,7 @@ type Post struct {
 	Content     string    `json:"content"`
 	Slug        string    `json:"slug"`
 	Tags        []string  `json:"tags"`
+	Comments    []Comment `json:"comments"`
 	CommunityID int64     `json:"communityID"`
 	Community   Community `josn:"community"`
 	UserID      int64     `json:"userID"`
