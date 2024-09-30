@@ -10,3 +10,6 @@ migrate-up:
 
 migrate-down:
 	@migrate -database $(DB_ADDR) -path $(MIGRATIONS_PATH) down
+
+seed:
+	@go run ./cmd/migrate/seed/main.go
