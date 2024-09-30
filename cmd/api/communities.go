@@ -170,7 +170,9 @@ func (app *application) communityContextMiddleware(next http.Handler) http.Handl
 
 		ctx := r.Context()
 
-		community, err := app.store.Communities.GetBySlug(ctx, slug)
+		userID := 1 // TODO: replace after auth
+
+		community, err := app.store.Communities.GetBySlug(ctx, slug, int64(userID))
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:

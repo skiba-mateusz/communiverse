@@ -10,6 +10,7 @@ type Community struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Slug        string `json:"slug"`
+	IsMember    bool   `json:"isMember"`
 	UserID      int64  `json:"userID"`
 	User        *User  `json:"user,omitempty"`
 	CreatedAt   string `json:"createdAt"`
@@ -33,11 +34,17 @@ func (s *CommunityStore) Create(ctx context.Context, community *Community) error
 	})
 }
 
-func (s *CommunityStore) GetBySlug(ctx context.Context, slug string) (*Community, error) {
+func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int64) (*Community, error) {
 	query := `
-		SELECT id, name, description, slug, user_id, created_at
-		FROM communities
-		WHERE slug = $1
+		SELECT 
+			c.id, c.name, c.description, c.slug, c.user_id, c.created_at,
+			uc.user_id IS NOT NULL AS is_member
+		FROM 
+			communities c
+		LEFT JOIN 
+			user_communities uc ON uc.community_id = c.id AND uc.user_id = $1  
+		WHERE 
+			c.slug = $2
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -48,6 +55,7 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string) (*Community
 	err := s.db.QueryRowContext(
 		ctx,
 		query,
+		userID,
 		slug,
 	).Scan(
 		&community.ID,
@@ -56,6 +64,7 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string) (*Community
 		&community.Slug,
 		&community.UserID,
 		&community.CreatedAt,
+		&community.IsMember,
 	)
 	if err != nil {
 		switch err {

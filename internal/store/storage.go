@@ -15,7 +15,7 @@ var (
 type Storage struct {
 	Communities interface {
 		Create(context.Context, *Community) error
-		GetBySlug(context.Context, string) (*Community, error)
+		GetBySlug(context.Context, string, int64) (*Community, error)
 		Delete(context.Context, string) error
 		Update(context.Context, *Community) error
 		Join(context.Context, int64, int64) error
