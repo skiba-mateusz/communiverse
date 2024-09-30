@@ -249,11 +249,13 @@ func generatePosts(num int, communities []*store.Community, users []*store.User)
 		user := users[rand.Intn(len(users))]
 		community := communities[rand.Intn(len(communities))]
 
+		title := titles[i%len(titles)]
+
 		p[i] = &store.Post{
-			Title:       titles[rand.Intn(len(titles))],
+			Title:       title,
 			Content:     contents[rand.Intn(len(contents))],
 			Tags:        []string{tags[rand.Intn(len(tags))], tags[rand.Intn(len(tags))]},
-			Slug:        slug.Make(titles[i%len(titles)] + fmt.Sprintf("-%d", i)),
+			Slug:        slug.Make(title) + fmt.Sprintf("-%d", i),
 			UserID:      user.ID,
 			CommunityID: community.ID,
 		}
