@@ -56,6 +56,7 @@ func (app *application) mount() http.Handler {
 				r.Delete("/leave", app.leaveCommunityHandler)
 
 				r.Route("/posts", func(r chi.Router) {
+					r.Get("/", app.getCommunityPostsHandler)
 					r.Post("/", app.createPostHandler)
 				})
 			})

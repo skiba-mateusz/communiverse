@@ -21,6 +21,11 @@ type Post struct {
 	CreatedAt   string     `json:"createdAt"`
 }
 
+type PostWithMetadata struct {
+	Post
+	CommentsCount int `json:"commentsCount"`
+}
+
 type PostStore struct {
 	db *sql.DB
 }
@@ -155,4 +160,73 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	}
 
 	return nil
+}
+
+func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID int64, q PaginatedCommunityPostsQuery) ([]PostWithMetadata, error) {
+	query := `
+		SELECT
+			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			u.id, u.username,
+			COUNT(cm.id) AS comments_count
+		FROM 
+			posts p
+		INNER JOIN 
+			communities c ON c.id = p.community_id
+		INNER JOIN
+			users u ON u.id = p.user_id
+		LEFT JOIN
+			comments cm ON cm.post_id = p.id
+		WHERE
+			c.id = $1 AND
+			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
+		GROUP BY p.id, u.id
+		ORDER BY p.created_at ` + q.Sort + `
+		LIMIT $3 OFFSET $4
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	posts := []PostWithMetadata{}
+	rows, err := s.db.QueryContext(
+		ctx,
+		query,
+		communityID,
+		q.Search,
+		q.Limit,
+		q.Offset,
+	)
+	if err != nil {
+		return posts, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post PostWithMetadata
+		post.User = &User{}
+
+		if err := rows.Scan(
+			&post.ID,
+			&post.Title,
+			&post.Content,
+			pq.Array(&post.Tags),
+			&post.Slug,
+			&post.UserID,
+			&post.CommunityID,
+			&post.CreatedAt,
+			&post.User.ID,
+			&post.User.Username,
+			&post.CommentsCount,
+		); err != nil {
+			return posts, err
+		}
+
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return posts, err
+	}
+
+	return posts, nil
 }

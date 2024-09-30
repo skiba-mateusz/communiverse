@@ -26,6 +26,7 @@ type Storage struct {
 		GetBySlug(context.Context, string) (*Post, error)
 		Delete(context.Context, string) error
 		Update(context.Context, *Post) error
+		GetCommunityPosts(context.Context, int64, PaginatedCommunityPostsQuery) ([]PostWithMetadata, error)
 	}
 	Comments interface {
 		Create(context.Context, *Comment) error

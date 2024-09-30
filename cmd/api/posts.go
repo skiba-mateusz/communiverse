@@ -155,6 +155,37 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.Request) {
+	query := store.PaginatedCommunityPostsQuery{
+		Limit:  5,
+		Offset: 0,
+		Sort:   "desc",
+	}
+
+	query, err := query.Parse(r)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(query); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	community := getCommunityFromContext(r)
+
+	posts, err := app.store.Posts.GetCommunityPosts(r.Context(), community.ID, query)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := jsonResponse(w, http.StatusOK, posts); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
 func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "postSlug")
