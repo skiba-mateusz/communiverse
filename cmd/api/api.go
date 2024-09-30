@@ -63,6 +63,8 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/posts", func(r chi.Router) {
+			r.Get("/", app.getPostsHandler)
+
 			r.Route("/{postSlug}", func(r chi.Router) {
 				r.Use(app.postContextMiddleware)
 

@@ -189,7 +189,7 @@ func (app *application) communityContextMiddleware(next http.Handler) http.Handl
 	})
 }
 
-func getCommunityFromContext(r *http.Request) *store.Community {
-	community := r.Context().Value(communityCtx).(*store.Community)
+func getCommunityFromContext(r *http.Request) *store.CommunityWithMembership {
+	community := r.Context().Value(communityCtx).(*store.CommunityWithMembership)
 	return community
 }

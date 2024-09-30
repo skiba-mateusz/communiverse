@@ -8,12 +8,16 @@ import (
 type Community struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Slug        string `json:"slug"`
-	IsMember    bool   `json:"isMember"`
 	UserID      int64  `json:"userID"`
 	User        *User  `json:"user,omitempty"`
-	CreatedAt   string `json:"createdAt"`
+	CreatedAt   string `json:"createdAt,omitempty"`
+}
+
+type CommunityWithMembership struct {
+	Community
+	IsMember bool `json:"isMember"`
 }
 
 type CommunityStore struct {
@@ -34,7 +38,7 @@ func (s *CommunityStore) Create(ctx context.Context, community *Community) error
 	})
 }
 
-func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int64) (*Community, error) {
+func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int64) (*CommunityWithMembership, error) {
 	query := `
 		SELECT 
 			c.id, c.name, c.description, c.slug, c.user_id, c.created_at,
@@ -50,7 +54,7 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	var community Community
+	var community CommunityWithMembership
 
 	err := s.db.QueryRowContext(
 		ctx,
@@ -105,7 +109,7 @@ func (s *CommunityStore) Delete(ctx context.Context, slug string) error {
 	return nil
 }
 
-func (s *CommunityStore) Update(ctx context.Context, community *Community) error {
+func (s *CommunityStore) Update(ctx context.Context, community *CommunityWithMembership) error {
 	query := `
 		UPDATE communities
 		SET name = $1, description = $2, slug = $3

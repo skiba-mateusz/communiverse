@@ -15,9 +15,9 @@ var (
 type Storage struct {
 	Communities interface {
 		Create(context.Context, *Community) error
-		GetBySlug(context.Context, string, int64) (*Community, error)
+		GetBySlug(context.Context, string, int64) (*CommunityWithMembership, error)
 		Delete(context.Context, string) error
-		Update(context.Context, *Community) error
+		Update(context.Context, *CommunityWithMembership) error
 		Join(context.Context, int64, int64) error
 		Leave(context.Context, int64, int64) error
 	}
@@ -26,7 +26,8 @@ type Storage struct {
 		GetBySlug(context.Context, string) (*Post, error)
 		Delete(context.Context, string) error
 		Update(context.Context, *Post) error
-		GetCommunityPosts(context.Context, int64, PaginatedCommunityPostsQuery) ([]PostWithMetadata, error)
+		GetCommunityPosts(context.Context, int64, PaginatedPostsQuery) ([]PostWithMetadata, error)
+		GetPosts(context.Context, PaginatedPostsQuery) ([]PostWithMetadata, error)
 	}
 	Comments interface {
 		Create(context.Context, *Comment) error

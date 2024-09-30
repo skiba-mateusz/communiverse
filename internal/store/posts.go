@@ -162,10 +162,11 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID int64, q PaginatedCommunityPostsQuery) ([]PostWithMetadata, error) {
+func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID int64, q PaginatedPostsQuery) ([]PostWithMetadata, error) {
 	query := `
 		SELECT
 			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			c.id, c.name, c.slug, c.user_id,			
 			u.id, u.username,
 			COUNT(cm.id) AS comments_count
 		FROM 
@@ -179,22 +180,57 @@ func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID int64, q 
 		WHERE
 			c.id = $1 AND
 			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
-		GROUP BY p.id, u.id
+		GROUP BY p.id, u.id, c.id
 		ORDER BY p.created_at ` + q.Sort + `
 		LIMIT $3 OFFSET $4
 	`
 
+	posts, err := s.fetchPosts(ctx, query, communityID, q.Search, q.Limit, q.Offset)
+	if err != nil {
+		return []PostWithMetadata{}, err
+	}
+
+	for i := range posts {
+		posts[i].Community = nil
+	}
+
+	return posts, nil
+}
+
+func (s *PostStore) GetPosts(ctx context.Context, q PaginatedPostsQuery) ([]PostWithMetadata, error) {
+	query := `
+		SELECT
+			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			c.id, c.name, c.slug, c.user_id,
+			u.id, u.username,
+			COUNT(cm.id) AS comments_count
+		FROM 
+			posts p
+		INNER JOIN 
+			communities c ON c.id = p.community_id
+		INNER JOIN
+			users u ON u.id = p.user_id
+		LEFT JOIN
+			comments cm ON cm.post_id = p.id
+		WHERE
+			(p.title ILIKE '%' || $1 || '%' OR p.content ILIKE '%' || $1 || '%')
+		GROUP BY p.id, u.id, c.id
+		ORDER BY p.created_at ` + q.Sort + `
+		LIMIT $2 OFFSET $3
+	`
+	return s.fetchPosts(ctx, query, q.Search, q.Limit, q.Offset)
+}
+
+func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interface{}) ([]PostWithMetadata, error) {
+	posts := []PostWithMetadata{}
+
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	posts := []PostWithMetadata{}
 	rows, err := s.db.QueryContext(
 		ctx,
 		query,
-		communityID,
-		q.Search,
-		q.Limit,
-		q.Offset,
+		args...,
 	)
 	if err != nil {
 		return posts, err
@@ -203,7 +239,9 @@ func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID int64, q 
 
 	for rows.Next() {
 		var post PostWithMetadata
+
 		post.User = &User{}
+		post.Community = &Community{}
 
 		if err := rows.Scan(
 			&post.ID,
@@ -214,6 +252,10 @@ func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID int64, q 
 			&post.UserID,
 			&post.CommunityID,
 			&post.CreatedAt,
+			&post.Community.ID,
+			&post.Community.Name,
+			&post.Community.Slug,
+			&post.Community.UserID,
 			&post.User.ID,
 			&post.User.Username,
 			&post.CommentsCount,
