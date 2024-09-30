@@ -221,6 +221,34 @@ func (s *PostStore) GetPosts(ctx context.Context, q PaginatedPostsQuery) ([]Post
 	return s.fetchPosts(ctx, query, q.Search, q.Limit, q.Offset)
 }
 
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostWithMetadata, error) {
+	query := `
+		SELECT 
+			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			c.id, c.name, c.slug, c.user_id,
+			u.id, u.username,
+			COUNT(cm.id) AS comments_count
+		FROM 
+			posts p
+		INNER JOIN 
+			communities c ON c.id = p.community_id
+		INNER JOIN 
+			users u ON u.id = p.user_id
+		INNER JOIN
+			user_communities uc ON uc.community_id = p.community_id AND uc.user_id = $1
+		LEFT JOIN
+			comments cm ON cm.post_id = p.id
+		WHERE 
+			uc.user_id = $1 AND
+			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
+		GROUP BY p.id, c.id, u.id
+		ORDER BY p.created_at ` + q.Sort + `
+		LIMIT $3 OFFSET $4
+	`
+
+	return s.fetchPosts(ctx, query, userID, q.Search, q.Limit, q.Offset)
+}
+
 func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interface{}) ([]PostWithMetadata, error) {
 	posts := []PostWithMetadata{}
 

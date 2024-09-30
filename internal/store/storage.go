@@ -29,6 +29,7 @@ type Storage struct {
 		Update(context.Context, *Post) error
 		GetCommunityPosts(context.Context, int64, PaginatedPostsQuery) ([]PostWithMetadata, error)
 		GetPosts(context.Context, PaginatedPostsQuery) ([]PostWithMetadata, error)
+		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]PostWithMetadata, error)
 	}
 	Comments interface {
 		Create(context.Context, *Comment) error

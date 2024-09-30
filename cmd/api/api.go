@@ -78,6 +78,10 @@ func (app *application) mount() http.Handler {
 				})
 			})
 		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/feed", app.getUserFeed)
+		})
 	})
 
 	return r
