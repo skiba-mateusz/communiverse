@@ -181,6 +181,57 @@ func (s *CommunityStore) Leave(ctx context.Context, communityID, userID int64) e
 	return nil
 }
 
+func (s *CommunityStore) GetCommunities(ctx context.Context, q PaginatedCommunitiesQuery) ([]Community, error) {
+	query := `
+		SELECT 
+			c.id, c.name, c.description, c.slug, c.user_id
+		FROM
+			communities c
+		WHERE 
+			c.name ILIKE '%' || $1 || '%' OR c.description ILIKE '%' || $1 || '%'
+		LIMIT $2 OFFSET $3
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	communities := []Community{}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		query,
+		q.Search,
+		q.Limit,
+		q.Offset,
+	)
+	if err != nil {
+		return communities, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var community Community
+
+		if err := rows.Scan(
+			&community.ID,
+			&community.Name,
+			&community.Description,
+			&community.Slug,
+			&community.UserID,
+		); err != nil {
+			return communities, err
+		}
+
+		communities = append(communities, community)
+	}
+
+	if err = rows.Err(); err != nil {
+		return communities, err
+	}
+
+	return communities, nil
+}
+
 func (s *CommunityStore) create(ctx context.Context, tx *sql.Tx, community *Community) error {
 	query := `
 	INSERT INTO communities (name, description, slug, user_id)

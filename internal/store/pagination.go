@@ -45,3 +45,38 @@ func (pq PaginatedPostsQuery) Parse(r *http.Request) (PaginatedPostsQuery, error
 
 	return pq, nil
 }
+
+type PaginatedCommunitiesQuery struct {
+	Search string `json:"search" validate:"max=100"`
+	Limit  int    `json:"limit" validate:"gte=1,lte=20"`
+	Offset int    `json:"offset" validate:"gte=0"`
+}
+
+func (cq PaginatedCommunitiesQuery) Parse(r *http.Request) (PaginatedCommunitiesQuery, error) {
+	qs := r.URL.Query()
+
+	search := qs.Get("search")
+	if search != "" {
+		cq.Search = search
+	}
+
+	limit := qs.Get("limit")
+	if limit != "" {
+		l, err := strconv.Atoi(limit)
+		if err != nil {
+			return cq, err
+		}
+		cq.Limit = l
+	}
+
+	offset := qs.Get("offset")
+	if offset != "" {
+		o, err := strconv.Atoi(offset)
+		if err != nil {
+			return cq, err
+		}
+		cq.Offset = o
+	}
+
+	return cq, nil
+}

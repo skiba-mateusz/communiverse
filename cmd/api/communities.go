@@ -164,6 +164,34 @@ func (app *application) leaveCommunityHandler(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
+	query := store.PaginatedCommunitiesQuery{
+		Limit:  5,
+		Offset: 0,
+	}
+
+	query, err := query.Parse(r)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(query); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	communities, err := app.store.Communities.GetCommunities(r.Context(), query)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := jsonResponse(w, http.StatusOK, communities); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
 func (app *application) communityContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "communitySlug")

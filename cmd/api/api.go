@@ -44,6 +44,7 @@ func (app *application) mount() http.Handler {
 
 		r.Route("/communities", func(r chi.Router) {
 			r.Post("/", app.createCommunityHandler)
+			r.Get("/", app.getCommunitiesHandler)
 
 			r.Route("/{communitySlug}", func(r chi.Router) {
 				r.Use(app.communityContextMiddleware)

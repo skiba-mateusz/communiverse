@@ -20,6 +20,7 @@ type Storage struct {
 		Update(context.Context, *CommunityWithMembership) error
 		Join(context.Context, int64, int64) error
 		Leave(context.Context, int64, int64) error
+		GetCommunities(context.Context, PaginatedCommunitiesQuery) ([]Community, error)
 	}
 	Posts interface {
 		Create(context.Context, *Post) error
