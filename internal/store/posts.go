@@ -103,8 +103,8 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string) (*Post, error) {
 	return &post, nil
 }
 
-func (s *PostStore) Delete(ctx context.Context, slug string) error {
-	query := `DELETE FROM posts WHERE slug = $1`
+func (s *PostStore) Delete(ctx context.Context, id int64) error {
+	query := `DELETE FROM posts WHERE id = $1`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -112,7 +112,7 @@ func (s *PostStore) Delete(ctx context.Context, slug string) error {
 	res, err := s.db.ExecContext(
 		ctx,
 		query,
-		slug,
+		id,
 	)
 	if err != nil {
 		return err

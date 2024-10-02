@@ -84,11 +84,11 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
-	postSlug := chi.URLParam(r, "postSlug")
+	post := getPostFromContext(r)
 
 	ctx := r.Context()
 
-	if err := app.store.Posts.Delete(ctx, postSlug); err != nil {
+	if err := app.store.Posts.Delete(ctx, post.ID); err != nil {
 		switch err {
 		case store.ErrNotFound:
 			app.notFoundResponse(w, r, err)

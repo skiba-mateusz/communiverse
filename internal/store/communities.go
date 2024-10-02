@@ -82,8 +82,8 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 	return &community, nil
 }
 
-func (s *CommunityStore) Delete(ctx context.Context, slug string) error {
-	query := `DELETE FROM communities WHERE slug = $1`
+func (s *CommunityStore) Delete(ctx context.Context, id int64) error {
+	query := `DELETE FROM communities WHERE id = $1`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -91,7 +91,7 @@ func (s *CommunityStore) Delete(ctx context.Context, slug string) error {
 	res, err := s.db.ExecContext(
 		ctx,
 		query,
-		slug,
+		id,
 	)
 	if err != nil {
 		return err

@@ -97,7 +97,7 @@ func (s *UserStore) GetByUsername(ctx context.Context, username string) (*User, 
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
-	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE id = $1`
+	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE id = $1 AND is_active = true`
 
 	return s.fetchUser(ctx, query, id)
 }

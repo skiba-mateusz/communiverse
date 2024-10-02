@@ -65,11 +65,11 @@ func (app *application) getCommunityHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (app *application) deleteCommunityHandler(w http.ResponseWriter, r *http.Request) {
-	slug := chi.URLParam(r, "communitySlug")
+	community := getCommunityFromContext(r)
 
 	ctx := r.Context()
 
-	if err := app.store.Communities.Delete(ctx, slug); err != nil {
+	if err := app.store.Communities.Delete(ctx, community.ID); err != nil {
 		switch err {
 		case store.ErrNotFound:
 			app.notFoundResponse(w, r, err)
@@ -88,13 +88,18 @@ type UpdateCommunityPayload struct {
 }
 
 func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Request) {
-	community := getCommunityFromContext(r)
-
 	var payload UpdateCommunityPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	community := getCommunityFromContext(r)
 
 	ctx := r.Context()
 
