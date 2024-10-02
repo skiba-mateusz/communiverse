@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"log"
 	"math/rand"
 
@@ -11,150 +12,138 @@ import (
 	"github.com/skiba-mateusz/communiverse/internal/store"
 )
 
-var names = []string{
-	"Alice",
-	"Bob",
-	"Charlie",
-	"David",
-	"Eve",
-	"Frank",
-	"Grace",
-	"Hannah",
-	"Ian",
-	"Julia",
-	"Kevin",
-	"Liam",
-	"Mia",
-	"Noah",
-	"Olivia",
-	"Peter",
-	"Quinn",
-	"Rachel",
-	"Sam",
-	"Tina",
-	"Ursula",
-	"Victor",
-	"Wendy",
-	"Xander",
-	"Yara",
-	"Zoe",
-}
+var (
+	names = []string{
+		"Alice Johnson", "Bob Smith", "Charlie Williams", "David Brown",
+		"Eve Davis", "Frank Miller", "Grace Wilson", "Hannah Moore",
+		"Ian Taylor", "Julia Anderson", "Kevin Thomas", "Liam Jackson",
+		"Mia White", "Noah Harris", "Olivia Martin", "Peter Thompson",
+		"Quinn Garcia", "Rachel Martinez", "Sam Walker", "Tina Lee",
+		"Ursula Clark", "Victor Hall", "Wendy Lewis", "Xander Young",
+		"Yara King",
+	}
 
-var communities = map[string]string{
-	"The Gamers Hub":          "A place for gamers to discuss their favorite games, share tips, and find teammates.",
-	"Bookworms Unite":         "A cozy corner for book lovers to share recommendations, reviews, and book-related discussions.",
-	"Tech Talk":               "A community for tech enthusiasts to discuss the latest gadgets, software, and industry trends.",
-	"Artistic Souls":          "A creative space for artists to showcase their work, share techniques, and inspire each other.",
-	"Fitness Fanatics":        "A supportive community for fitness lovers to share workout routines, nutrition tips, and motivation.",
-	"Movie Buffs":             "A film lover’s paradise to discuss, review, and recommend movies across all genres.",
-	"Foodie Friends":          "A delicious community where food lovers can share recipes, reviews, and culinary tips.",
-	"Travel Enthusiasts":      "A place for adventurers to share travel tips, experiences, and dream destinations.",
-	"Pet Lovers":              "A community for pet owners to share adorable photos, tips, and pet care advice.",
-	"Music Masters":           "A gathering spot for music lovers to discuss their favorite artists, albums, and genres.",
-	"DIY Creators":            "A hands-on community for crafters and DIY enthusiasts to share projects and ideas.",
-	"Anime Addicts":           "A haven for anime fans to discuss their favorite series, characters, and upcoming releases.",
-	"Science Explorers":       "A curious community for science lovers to share discoveries, articles, and experiments.",
-	"History Buffs":           "A space for history enthusiasts to discuss historical events, figures, and trivia.",
-	"Nature Lovers":           "A community for outdoor enthusiasts to share nature photos, conservation tips, and adventures.",
-	"Fantasy Realm":           "A magical community for fans of fantasy literature, games, and role-playing.",
-	"Sports Junkies":          "A gathering place for sports fans to discuss games, teams, and athlete news.",
-	"Comic Book Collectors":   "A community for comic book fans to discuss their favorite comics, characters, and collectibles.",
-	"Photography Enthusiasts": "A visual community for photographers to share their work, techniques, and tips.",
-	"Mindfulness Community":   "A supportive space for those interested in mindfulness, meditation, and self-improvement.",
-}
+	usernames = []string{
+		"alice_johnson", "bobsmith", "charlie.williams", "david_brown",
+		"eve_davis", "frank_miller", "grace_wilson", "hannah.moore",
+		"ian_taylor", "julia.anderson", "kevint", "liam_j",
+		"mia_white", "noah.harris", "olivia_m", "peter.t",
+		"quinn_garcia", "rachel.m", "sam_walker", "tina.lee",
+		"ursula_clark", "victor_hall", "wendy.lewis", "xander_young",
+		"yara.king",
+	}
 
-var titles = []string{
-	"The Ultimate Gaming Setup",
-	"Must-Read Books for 2024",
-	"Top 10 Tech Gadgets You Need",
-	"Creative Art Techniques for Beginners",
-	"How to Stay Fit at Home",
-	"Best Movies of the Year",
-	"Delicious Recipes for Quick Meals",
-	"Travel Tips for Adventurers",
-	"Pet Care Essentials Every Owner Should Know",
-	"Music Albums You Can’t Miss",
-	"DIY Projects for Every Skill Level",
-	"Anime Series Worth Watching",
-	"Fascinating Science Discoveries",
-	"Historical Events That Changed the World",
-	"Exploring National Parks",
-	"Fantasy Books That Will Transport You",
-	"Essential Gear for Sports Lovers",
-	"Comic Books You Should Read",
-	"Photography Tips for Beginners",
-	"Mindfulness Practices for Daily Life",
-}
+	professions = []string{
+		"Software Engineer", "Graphic Designer", "Data Scientist", "Web Developer",
+		"Project Manager", "UX Researcher", "Content Writer", "Software Tester",
+		"DevOps Engineer", "Data Analyst", "Mobile App Developer", "SEO Specialist",
+		"Database Administrator", "Systems Analyst", "Cloud Engineer", "Network Administrator",
+		"Product Owner", "Business Analyst", "Frontend Developer", "Backend Developer",
+		"Game Developer", "Security Analyst", "Ethical Hacker", "System Architect",
+		"Blockchain Developer",
+	}
 
-var contents = []string{
-	"Setting up the perfect gaming environment can elevate your experience. Here are some tips to optimize your space and equipment.",
-	"These books are must-reads for anyone looking to expand their knowledge and imagination in 2024. Check out the list!",
-	"Stay updated with the latest tech trends. Here are some gadgets that every tech enthusiast should consider adding to their collection.",
-	"Whether you're just starting or looking to refine your skills, these art techniques will help unleash your creativity.",
-	"Fitness doesn't have to be complicated. Here are some simple yet effective routines you can do at home.",
-	"Explore the cinematic gems of the year that you may have missed. From action to drama, there's something for everyone!",
-	"Cooking can be fun and quick! Here are some delicious recipes that are easy to prepare.",
-	"Ready to explore the world? Here are some tips to make the most of your travel adventures!",
-	"Caring for pets requires dedication. Learn about the essentials that every pet owner should know.",
-	"Discover music albums that have defined genres and touched hearts. These are the albums you should listen to.",
-	"Get crafty! Here are some DIY projects that cater to all skill levels, from beginner to expert.",
-	"Dive into the world of anime with these series that offer captivating stories and stunning visuals.",
-	"Science is ever-evolving. Discover some of the latest discoveries that have fascinated researchers and enthusiasts alike.",
-	"History is filled with events that have shaped our present. Explore these pivotal moments in time.",
-	"Nature awaits! Explore the breathtaking beauty of national parks and the adventures they offer.",
-	"Fantasy literature transports readers to magical worlds. Here are some books that will spark your imagination.",
-	"Whether you're a player or a fan, here’s the essential gear that sports lovers shouldn't be without.",
-	"Comic books have a rich history and culture. Discover which titles are worth your time and attention.",
-	"Photography is an art that requires practice. Here are some tips to help you capture stunning images.",
-	"Mindfulness can transform your life. Explore simple practices that can be incorporated into your daily routine.",
-}
+	communities = map[string]string{
+		"The Gamers Hub":          "A place for gamers to discuss their favorite games, share tips, and find teammates.",
+		"Bookworms Unite":         "A cozy corner for book lovers to share recommendations, reviews, and book-related discussions.",
+		"Tech Talk":               "A community for tech enthusiasts to discuss the latest gadgets, software, and industry trends.",
+		"Artistic Souls":          "A creative space for artists to showcase their work, share techniques, and inspire each other.",
+		"Fitness Fanatics":        "A supportive community for fitness lovers to share workout routines, nutrition tips, and motivation.",
+		"Movie Buffs":             "A film lover’s paradise to discuss, review, and recommend movies across all genres.",
+		"Foodie Friends":          "A delicious community where food lovers can share recipes, reviews, and culinary tips.",
+		"Travel Enthusiasts":      "A place for adventurers to share travel tips, experiences, and dream destinations.",
+		"Pet Lovers":              "A community for pet owners to share adorable photos, tips, and pet care advice.",
+		"Music Masters":           "A gathering spot for music lovers to discuss their favorite artists, albums, and genres.",
+		"DIY Creators":            "A hands-on community for crafters and DIY enthusiasts to share projects and ideas.",
+		"Anime Addicts":           "A haven for anime fans to discuss their favorite series, characters, and upcoming releases.",
+		"Science Explorers":       "A curious community for science lovers to share discoveries, articles, and experiments.",
+		"History Buffs":           "A space for history enthusiasts to discuss historical events, figures, and trivia.",
+		"Nature Lovers":           "A community for outdoor enthusiasts to share nature photos, conservation tips, and adventures.",
+		"Fantasy Realm":           "A magical community for fans of fantasy literature, games, and role-playing.",
+		"Sports Junkies":          "A gathering place for sports fans to discuss games, teams, and athlete news.",
+		"Comic Book Collectors":   "A community for comic book fans to discuss their favorite comics, characters, and collectibles.",
+		"Photography Enthusiasts": "A visual community for photographers to share their work, techniques, and tips.",
+		"Mindfulness Community":   "A supportive space for those interested in mindfulness, meditation, and self-improvement.",
+	}
 
-var tags = []string{
-	"Gaming",
-	"Books",
-	"Technology",
-	"Art",
-	"Fitness",
-	"Movies",
-	"Food",
-	"Travel",
-	"Pets",
-	"Music",
-	"DIY",
-	"Anime",
-	"Science",
-	"History",
-	"Nature",
-	"Fantasy",
-	"Sports",
-	"Comics",
-	"Photography",
-	"Mindfulness",
-}
+	titles = []string{
+		"The Future of Technology in 2024",
+		"10 Tips for a Healthier Lifestyle",
+		"Exploring the Best National Parks",
+		"How to Start a Successful Blog",
+		"Understanding Artificial Intelligence",
+		"The Impact of Climate Change on Wildlife",
+		"Creative Art Techniques for Beginners",
+		"Top 5 Programming Languages to Learn",
+		"The Benefits of Mindfulness Meditation",
+		"How to Travel on a Budget",
+		"Must-Read Books for Personal Growth",
+		"Delicious Recipes for Quick Meals",
+		"Exploring the World of Video Games",
+		"The Importance of Financial Literacy",
+		"Tips for Effective Remote Work",
+		"The Best Movies of the Year",
+		"How to Build a Great Online Portfolio",
+		"Essential Skills for Career Advancement",
+		"Understanding Cryptocurrency",
+		"Photography Tips for Beginners",
+	}
 
-var comments = []string{
-	"Great insights! Thanks for sharing!",
-	"I totally agree with this!",
-	"This is so helpful, thank you!",
-	"I've tried this technique before and loved it!",
-	"Can you elaborate more on this topic?",
-	"This deserves more attention!",
-	"Awesome post! Can't wait to try it!",
-	"I appreciate the recommendations!",
-	"Very informative! Thank you!",
-	"Have you considered this other perspective?",
-	"Interesting take on this subject!",
-	"I learned something new today!",
-	"Your passion for this topic is evident!",
-	"This is exactly what I needed!",
-	"Such a well-researched article!",
-	"Thanks for providing your experience!",
-	"Looking forward to your next post!",
-	"Can you provide sources for this information?",
-	"Absolutely! This resonates with me.",
-	"I disagree, here's why...",
-	"This sparked a great discussion!",
-}
+	contents = []string{
+		"Technology is evolving rapidly. Here are some trends that will shape the future of our lives in 2024.",
+		"Adopting a healthier lifestyle can be easy with these simple tips. Start your journey towards better health today!",
+		"National parks are a treasure trove of beauty and adventure. Discover some of the most breathtaking parks to visit.",
+		"Starting a blog can be a rewarding experience. Learn the steps you need to take to launch your blog successfully.",
+		"Artificial intelligence is changing the world. Here’s a look at its current applications and future potential.",
+		"Climate change is affecting wildlife around the globe. Understand its impact and how we can help.",
+		"Unleash your creativity with these fun and simple art techniques that anyone can try, regardless of skill level.",
+		"Learning a new programming language can be daunting. Here are the top 5 languages that can boost your career.",
+		"Mindfulness meditation can improve your mental well-being. Discover its benefits and how to get started.",
+		"Traveling doesn't have to be expensive. Here are some practical tips to make the most of your travel adventures on a budget.",
+		"Personal growth is an important journey. Here are some must-read books that can inspire and guide you.",
+		"Cooking can be quick and satisfying. Try these delicious recipes that require minimal preparation.",
+		"Video games have become a significant part of our culture. Explore the world of gaming and its many facets.",
+		"Financial literacy is crucial in today’s world. Here are some concepts everyone should understand.",
+		"Remote work can be challenging. Here are tips to enhance productivity and work-life balance while working from home.",
+		"Catch up on the best movies released this year, featuring diverse genres and unforgettable stories.",
+		"Building an online portfolio can showcase your work. Here’s how to create a compelling and attractive portfolio.",
+		"Essential skills can set you apart in your career. Learn what skills are most in demand today.",
+		"Cryptocurrency is a hot topic in finance. Understand the basics and how it’s changing the landscape.",
+		"Photography is an art form that anyone can master. Check out these tips to improve your photography skills.",
+	}
+
+	tags = []string{
+		"Technology", "Health", "Travel", "Blogging",
+		"AI", "Climate Change", "Art", "Programming",
+		"Mindfulness", "Budget Travel", "Personal Growth", "Cooking",
+		"Video Games", "Finance", "Remote Work", "Movies",
+		"Portfolio", "Career", "Cryptocurrency", "Photography",
+	}
+
+	comments = []string{
+		"Great insights! Thanks for sharing!",
+		"I totally agree with this!",
+		"This is so helpful, thank you!",
+		"I've tried this technique before and loved it!",
+		"Can you elaborate more on this topic?",
+		"This deserves more attention!",
+		"Awesome post! Can't wait to try it!",
+		"I appreciate the recommendations!",
+		"Very informative! Thank you!",
+		"Have you considered this other perspective?",
+		"Interesting take on this subject!",
+		"I learned something new today!",
+		"Your passion for this topic is evident!",
+		"This is exactly what I needed!",
+		"Such a well-researched article!",
+		"Thanks for providing your experience!",
+		"Looking forward to your next post!",
+		"Can you provide sources for this information?",
+		"Absolutely! This resonates with me.",
+		"I disagree, here's why...",
+		"This sparked a great discussion!",
+	}
+)
 
 func Seed(store store.Storage, db *sql.DB) {
 	ctx := context.Background()
@@ -163,11 +152,17 @@ func Seed(store store.Storage, db *sql.DB) {
 	tx, _ := db.BeginTx(ctx, nil)
 
 	for _, user := range users {
+
 		if err := store.Users.Create(ctx, tx, user); err != nil {
 			_ = tx.Rollback()
 			log.Println("Error creating user:", err)
 			return
 		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Println("Error committing transaction:", err)
+		return
 	}
 
 	communities := generateCommunities(users)
@@ -178,7 +173,7 @@ func Seed(store store.Storage, db *sql.DB) {
 		}
 	}
 
-	userCommunities := generateUserCommunities(300, communities, users)
+	userCommunities := generateUserCommunities(200, communities, users)
 	for userID, communityID := range userCommunities {
 		if err := store.Communities.Join(ctx, communityID, userID); err != nil {
 			log.Println("Error creating user communities:", err)
@@ -208,8 +203,10 @@ func generateUsers(num int) []*store.User {
 
 	for i := 0; i < num; i++ {
 		users[i] = &store.User{
-			Username: names[i%len(names)] + fmt.Sprintf("%d", i),
-			Email:    names[i%len(names)] + fmt.Sprintf("%d", i) + "@example.com",
+			Name:     names[i%len(names)],
+			Username: fmt.Sprintf("%s%d", usernames[i%len(usernames)], i),
+			Email:    fmt.Sprintf("%s%d@example.com", usernames[i%len(usernames)], i),
+			Password: store.Password{Hash: []byte("123456")},
 		}
 	}
 
@@ -256,9 +253,9 @@ func generatePosts(num int, communities []*store.Community, users []*store.User)
 
 		p[i] = &store.Post{
 			Title:       title,
-			Content:     contents[rand.Intn(len(contents))],
-			Tags:        []string{tags[rand.Intn(len(tags))], tags[rand.Intn(len(tags))]},
-			Slug:        slug.Make(title) + fmt.Sprintf("-%d", i),
+			Content:     contents[i%len(contents)],
+			Tags:        []string{tags[i%len(tags)]},
+			Slug:        fmt.Sprintf("%s-%d", slug.Make(title), i),
 			UserID:      user.ID,
 			CommunityID: community.ID,
 		}
