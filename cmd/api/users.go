@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/skiba-mateusz/communiverse/internal/store"
 )
 
@@ -35,4 +36,21 @@ func (app *application) getUserFeed(w http.ResponseWriter, r *http.Request) {
 	if err := jsonResponse(w, http.StatusOK, posts); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+
+	err := app.store.Users.Activate(r.Context(), token)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.badRequestResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

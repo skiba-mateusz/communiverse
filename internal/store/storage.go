@@ -36,7 +36,9 @@ type Storage struct {
 		GetByPostID(context.Context, int64) ([]Comment, error)
 	}
 	Users interface {
-		Create(context.Context, *User) error
+		Create(context.Context, *sql.Tx, *User) error
+		CreateAndInvite(context.Context, *User, string, time.Duration) error
+		Activate(context.Context, string) error
 	}
 	Common interface {
 		GenerateUniqueSlug(context.Context, string, string) (string, error)
