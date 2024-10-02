@@ -1,0 +1,11 @@
+{{define "subject"}} Finish Registration with Communiverse {{end}}
+
+{{define "body"}}
+<html>
+  <body>
+    <p>Hi {{.Username}}, Thanks for signing for the Communiverse</p>
+    <p>Confirm your email address: <a href="{{.ActivationURL}}">{{.ActivationURL}}</a></p>
+    <p>Thanks, Communiverse Team</p>
+  </body>
+</html>
+{{end}}

@@ -3,9 +3,11 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/skiba-mateusz/communiverse/internal/mailer"
 	"github.com/skiba-mateusz/communiverse/internal/store"
 )
 
@@ -55,12 +57,31 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	userWithToken := store.UserWithToken{
-		User:  user,
-		Token: plainToken,
+	activationURL := fmt.Sprintf("%s/auth/confirm/%s", app.config.frontendURL, plainToken)
+
+	vars := struct {
+		Username      string
+		ActivationURL string
+	}{
+		Username:      user.Username,
+		ActivationURL: activationURL,
 	}
 
-	if err := jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
+	status, err := app.mailer.Send(mailer.InviteUserTemplate, user.Username, user.Email, vars, app.config.env == "development")
+	if err != nil {
+		app.logger.Errorw("error sending email", "error", err)
+
+		if err := app.store.Users.Delete(r.Context(), user.ID); err != nil {
+			app.logger.Errorw("error deleting user", "error", err)
+		}
+
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	app.logger.Infow("Email sent", "status code", status)
+
+	if err := jsonResponse(w, http.StatusCreated, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
