@@ -10,6 +10,7 @@ import (
 )
 
 type RegisterUserPayload struct {
+	Name     string `json:"name" validate:"required,min=3,max=100"`
 	Username string `json:"username" validate:"required,min=3,max=100"`
 	Email    string `json:"email" validate:"required,email,max=100"`
 	Password string `json:"password" validate:"required,min=6,max=100"`
@@ -28,6 +29,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	user := &store.User{
+		Name:     payload.Name,
 		Username: payload.Username,
 		Email:    payload.Email,
 	}

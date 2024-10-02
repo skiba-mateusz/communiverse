@@ -1,0 +1,3 @@
+ALTER TABLE users
+ADD COLUMN bio TEXT,
+ADD COLUMN name varchar(255) NOT NULL;
