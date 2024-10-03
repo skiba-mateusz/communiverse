@@ -24,6 +24,7 @@ type config struct {
 	frontendURL string
 	db          dbConfig
 	mail        mailConfig
+	auth        authConfig
 }
 
 type dbConfig struct {
@@ -43,6 +44,15 @@ type sendGridConfig struct {
 	apiKey string
 }
 
+type authConfig struct {
+	basic basicConfig
+}
+
+type basicConfig struct {
+	user     string
+	password string
+}
+
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
@@ -54,7 +64,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health", app.healthHandler)
+		r.With(app.basicAuthMiddleware()).Get("/health", app.healthHandler)
 
 		r.Route("/communities", func(r chi.Router) {
 			r.Post("/", app.createCommunityHandler)
