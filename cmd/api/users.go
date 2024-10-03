@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -98,6 +99,7 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	user := getUserFromContext(r)
+	log.Println(user)
 
 	if payload.Name != nil {
 		user.Name = *payload.Name

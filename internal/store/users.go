@@ -27,11 +27,6 @@ type User struct {
 	CreatedAt string   `json:"createdAt,omitempty"`
 }
 
-type UserWithToken struct {
-	*User
-	Token string `json:"token"`
-}
-
 type Password struct {
 	Text string
 	Hash []byte
@@ -93,13 +88,13 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 func (s *UserStore) GetByUsername(ctx context.Context, username string) (*User, error) {
 	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE username = $1 AND is_active = true`
 
-	return s.fetchUser(ctx, query, username)
+	return s.fetch(ctx, query, username)
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE id = $1 AND is_active = true`
 
-	return s.fetchUser(ctx, query, id)
+	return s.fetch(ctx, query, id)
 }
 
 func (s *UserStore) Delete(ctx context.Context, id int64) error {
@@ -126,9 +121,17 @@ func (s *UserStore) Delete(ctx context.Context, id int64) error {
 }
 
 func (s *UserStore) Update(ctx context.Context, user *User) error {
-	return withTx(ctx, s.db, func(tx *sql.Tx) error {
-		return s.update(ctx, tx, user)
-	})
+	query := `UPDATE users SET name = $1, username = $2, bio = $3 WHERE id = $4`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Bio, user.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, token string, invitationExp time.Duration) error {
@@ -148,8 +151,7 @@ func (s *UserStore) Activate(ctx context.Context, token string) error {
 			return err
 		}
 
-		user.IsActive = true
-		if err := s.update(ctx, tx, user); err != nil {
+		if err := s.updateActivationStatus(ctx, tx, true, user.ID); err != nil {
 			return err
 		}
 
@@ -157,7 +159,7 @@ func (s *UserStore) Activate(ctx context.Context, token string) error {
 	})
 }
 
-func (s *UserStore) fetchUser(ctx context.Context, query string, args ...interface{}) (*User, error) {
+func (s *UserStore) fetch(ctx context.Context, query string, args ...interface{}) (*User, error) {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
@@ -183,13 +185,13 @@ func (s *UserStore) fetchUser(ctx context.Context, query string, args ...interfa
 	return user, nil
 }
 
-func (s *UserStore) update(ctx context.Context, tx *sql.Tx, user *User) error {
-	query := `UPDATE users SET name = $1, username = $2, email = $3, bio = $4, is_active = $5 WHERE id = $6`
+func (s *UserStore) updateActivationStatus(ctx context.Context, tx *sql.Tx, status bool, userID int64) error {
+	query := `UPDATE users SET is_active = $1 WHERE id = $2`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	_, err := tx.ExecContext(ctx, query, user.Name, user.Username, user.Email, user.Bio, user.IsActive, user.ID)
+	_, err := tx.ExecContext(ctx, query, status, userID)
 	if err != nil {
 		return err
 	}
