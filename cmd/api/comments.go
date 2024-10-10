@@ -23,18 +23,23 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	post := getPostFromContext(r)
+	user := getUserFromContext(r)
 	ctx := r.Context()
 
 	comment := &store.Comment{
 		Content: payload.Content,
 		PostID:  post.ID,
-		UserID:  1,
+		UserID:  user.ID,
+		User:    &store.User{},
 	}
 
 	if err := app.store.Comments.Create(ctx, comment); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
+
+	comment.User.Username = user.Username
+	comment.User.ID = user.ID
 
 	if err := jsonResponse(w, http.StatusCreated, comment); err != nil {
 		app.internalServerError(w, r, err)

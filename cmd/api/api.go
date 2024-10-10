@@ -6,16 +6,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/skiba-mateusz/communiverse/internal/auth"
 	"github.com/skiba-mateusz/communiverse/internal/mailer"
 	"github.com/skiba-mateusz/communiverse/internal/store"
 	"go.uber.org/zap"
 )
 
 type application struct {
-	config config
-	logger *zap.SugaredLogger
-	store  store.Storage
-	mailer mailer.Client
+	config        config
+	logger        *zap.SugaredLogger
+	store         store.Storage
+	mailer        mailer.Client
+	authenticator auth.Authenticator
 }
 
 type config struct {
@@ -46,11 +48,18 @@ type sendGridConfig struct {
 
 type authConfig struct {
 	basic basicConfig
+	token tokenConfig
 }
 
 type basicConfig struct {
 	user     string
 	password string
+}
+
+type tokenConfig struct {
+	secret string
+	exp    time.Duration
+	iss    string
 }
 
 func (app *application) mount() http.Handler {
@@ -67,6 +76,8 @@ func (app *application) mount() http.Handler {
 		r.With(app.basicAuthMiddleware()).Get("/health", app.healthHandler)
 
 		r.Route("/communities", func(r chi.Router) {
+			r.Use(app.tokenAuthMiddleware)
+
 			r.Post("/", app.createCommunityHandler)
 			r.Get("/", app.getCommunitiesHandler)
 
@@ -91,6 +102,7 @@ func (app *application) mount() http.Handler {
 			r.Get("/", app.getPostsHandler)
 
 			r.Route("/{postSlug}", func(r chi.Router) {
+				r.Use(app.tokenAuthMiddleware)
 				r.Use(app.postContextMiddleware)
 
 				r.Get("/", app.getPostHandler)
@@ -106,19 +118,24 @@ func (app *application) mount() http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			r.Put("/activate/{token}", app.activateUserHandler)
 
-			r.Route("/{username}", func(r chi.Router) {
-				r.Use(app.userContextMiddleware)
+			r.Group(func(r chi.Router) {
+				r.Use(app.tokenAuthMiddleware)
 
-				r.Get("/", app.getUserHandler)
-				r.Delete("/", app.deleteUserHandler)
-				r.Patch("/", app.updateUserHandler)
+				r.Get("/me", app.getCurrentUserHandler)
+				r.Get("/feed", app.getCurrentUserFeedHandler)
+				r.Delete("/", app.deleteCurrentUserHandler)
+				r.Patch("/", app.updateCurrentUserHandler)
+
+				r.Route("/{username}", func(r chi.Router) {
+					r.Get("/", app.getUserHandler)
+
+				})
 			})
-
-			r.Get("/feed", app.getUserFeedHandler)
 		})
 
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", app.registerUserHandler)
+			r.Post("/login", app.loginUserHandler)
 		})
 	})
 

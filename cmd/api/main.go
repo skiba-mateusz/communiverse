@@ -5,6 +5,7 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/skiba-mateusz/communiverse/internal/auth"
 	"github.com/skiba-mateusz/communiverse/internal/db"
 	"github.com/skiba-mateusz/communiverse/internal/env"
 	"github.com/skiba-mateusz/communiverse/internal/mailer"
@@ -39,6 +40,11 @@ func main() {
 				user:     env.GetString("AUTH_BASIC_USER", "admin"),
 				password: env.GetString("AUTH_BASIC_PASSWORD", "admin"),
 			},
+			token: tokenConfig{
+				secret: env.GetString("AUTH_TOKEN_SECRET", "secret"),
+				exp:    time.Hour * 24 * 3,
+				iss:    "Communiverse",
+			},
 		},
 	}
 
@@ -59,12 +65,18 @@ func main() {
 
 	store := store.NewStorage(db)
 	mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
+	authenticator := auth.NewJWTAuthenticator(
+		cfg.auth.token.secret,
+		cfg.auth.token.iss,
+		cfg.auth.token.iss,
+	)
 
 	app := &application{
-		config: cfg,
-		logger: logger,
-		store:  store,
-		mailer: mailer,
+		config:        cfg,
+		logger:        logger,
+		store:         store,
+		mailer:        mailer,
+		authenticator: authenticator,
 	}
 
 	mux := app.mount()

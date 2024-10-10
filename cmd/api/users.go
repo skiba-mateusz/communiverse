@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,7 +13,7 @@ const (
 	userCtx userKey = "user"
 )
 
-func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http.Request) {
 	query := store.PaginatedPostsQuery{
 		Limit:  10,
 		Offset: 0,
@@ -33,9 +31,9 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userID := 704 // TODO: replace after auth
+	user := getUserFromContext(r)
 
-	posts, err := app.store.Posts.GetUserFeed(r.Context(), int64(userID), query)
+	posts, err := app.store.Posts.GetUserFeed(r.Context(), user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -63,7 +61,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (app *application) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) deleteCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 
 	if err := app.store.Users.Delete(r.Context(), user.ID); err != nil {
@@ -85,7 +83,7 @@ type UpdateUserPayload struct {
 	Bio      *string `json:"bio" validate:"omitempty,min=8,max=100"`
 }
 
-func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload UpdateUserPayload
 
 	if err := readJSON(w, r, &payload); err != nil {
@@ -99,7 +97,6 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	user := getUserFromContext(r)
-	log.Println(user)
 
 	if payload.Name != nil {
 		user.Name = *payload.Name
@@ -127,34 +124,32 @@ func (app *application) updateUserHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	user := getUserFromContext(r)
+	username := chi.URLParam(r, "username")
+
+	ctx := r.Context()
+
+	user, err := app.store.Users.GetByUsername(ctx, username)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
 
 	if err := jsonResponse(w, http.StatusOK, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
 
-func (app *application) userContextMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username := chi.URLParam(r, "username")
+func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r)
 
-		ctx := r.Context()
-
-		user, err := app.store.Users.GetByUsername(ctx, username)
-		if err != nil {
-			switch err {
-			case store.ErrNotFound:
-				app.notFoundResponse(w, r, err)
-			default:
-				app.internalServerError(w, r, err)
-			}
-			return
-		}
-
-		ctx = context.WithValue(ctx, userCtx, user)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	if err := jsonResponse(w, http.StatusOK, user); err != nil {
+		app.internalServerError(w, r, err)
+	}
 }
 
 func getUserFromContext(r *http.Request) *store.User {

@@ -39,9 +39,11 @@ type Storage struct {
 		Create(context.Context, *sql.Tx, *User) error
 		GetByUsername(context.Context, string) (*User, error)
 		GetByID(context.Context, int64) (*User, error)
+		GetByEmail(context.Context, string) (*User, error)
 		Delete(context.Context, int64) error
 		Update(context.Context, *User) error
 		CreateAndInvite(context.Context, *User, string, time.Duration) error
+		CreateInvitation(context.Context, string, time.Duration, int64) error
 		Activate(context.Context, string) error
 	}
 	Common interface {

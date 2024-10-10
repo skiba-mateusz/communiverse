@@ -39,11 +39,13 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	user := getUserFromContext(r)
+
 	community := &store.Community{
 		Name:        payload.Name,
 		Description: payload.Description,
 		Slug:        slug,
-		UserID:      1,
+		UserID:      user.ID,
 	}
 
 	if err := app.store.Communities.Create(ctx, community); err != nil {
@@ -137,9 +139,9 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 func (app *application) joinCommunityHandler(w http.ResponseWriter, r *http.Request) {
 	community := getCommunityFromContext(r)
 
-	userID := 1 // TODO: repalce after auth
+	user := getUserFromContext(r)
 
-	if err := app.store.Communities.Join(r.Context(), community.ID, int64(userID)); err != nil {
+	if err := app.store.Communities.Join(r.Context(), community.ID, user.ID); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -150,13 +152,13 @@ func (app *application) joinCommunityHandler(w http.ResponseWriter, r *http.Requ
 func (app *application) leaveCommunityHandler(w http.ResponseWriter, r *http.Request) {
 	community := getCommunityFromContext(r)
 
-	userID := 1 // TODO: repalce after auth
+	user := getUserFromContext(r)
 
-	if userID == int(community.UserID) {
+	if user.ID == community.UserID {
 		return
 	}
 
-	if err := app.store.Communities.Leave(r.Context(), community.ID, int64(userID)); err != nil {
+	if err := app.store.Communities.Leave(r.Context(), community.ID, user.ID); err != nil {
 		switch err {
 		case store.ErrNotFound:
 			app.notFoundResponse(w, r, err)
@@ -203,9 +205,9 @@ func (app *application) communityContextMiddleware(next http.Handler) http.Handl
 
 		ctx := r.Context()
 
-		userID := 1 // TODO: replace after auth
+		user := getUserFromContext(r)
 
-		community, err := app.store.Communities.GetBySlug(ctx, slug, int64(userID))
+		community, err := app.store.Communities.GetBySlug(ctx, slug, user.ID)
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:

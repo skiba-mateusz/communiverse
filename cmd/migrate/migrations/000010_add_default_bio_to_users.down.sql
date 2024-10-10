@@ -1,0 +1,6 @@
+ALTER TABLE users
+ALTER COLUMN bio DROP DEFAULT;
+
+UPDATE users 
+SET bio = NULL
+WHERE bio = '';

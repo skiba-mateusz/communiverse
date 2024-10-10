@@ -12,23 +12,22 @@ import (
 )
 
 var (
-	ErrDuplicateUsername = fmt.Errorf("user with that email already exists")
-	ErrDuplicateEmail    = fmt.Errorf("user with that username already exists")
+	ErrDuplicateUsername = fmt.Errorf("user with that username already exists")
+	ErrDuplicateEmail    = fmt.Errorf("user with that email already exists")
 )
 
 type User struct {
 	ID        int64    `json:"id"`
 	Name      string   `json:"name"`
 	Username  string   `json:"username"`
-	Email     string   `json:"email,omitempty"`
+	Email     string   `json:"email"`
 	Password  Password `json:"-"`
-	Bio       string   `json:"bio,omitempty"`
+	Bio       string   `json:"bio"`
 	IsActive  bool     `json:"-"`
-	CreatedAt string   `json:"createdAt,omitempty"`
+	CreatedAt string   `json:"createdAt"`
 }
 
 type Password struct {
-	Text string
 	Hash []byte
 }
 
@@ -38,10 +37,12 @@ func (p *Password) Set(text string) error {
 		return err
 	}
 
-	p.Text = text
 	p.Hash = hash
-
 	return nil
+}
+
+func (p *Password) Matches(text string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(p.Hash), []byte(text)) == nil
 }
 
 type UserStore struct {
@@ -74,7 +75,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
-			return ErrDuplicateUsername
+			return ErrDuplicateEmail
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_username_key"`:
 			return ErrDuplicateUsername
 		default:
@@ -86,15 +87,51 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 }
 
 func (s *UserStore) GetByUsername(ctx context.Context, username string) (*User, error) {
-	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE username = $1 AND is_active = true`
+	query := `SELECT id, name, username, bio, created_at FROM users WHERE username = $1 AND is_active = true`
 
-	return s.fetch(ctx, query, username)
+	user := &User{}
+	if err := s.fetchUser(
+		ctx,
+		query,
+		[]any{username},
+		[]any{&user.ID, &user.Name, &user.Username, &user.Bio, &user.CreatedAt},
+	); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE id = $1 AND is_active = true`
 
-	return s.fetch(ctx, query, id)
+	user := &User{}
+	if err := s.fetchUser(
+		ctx,
+		query,
+		[]any{id},
+		[]any{&user.ID, &user.Name, &user.Username, &user.Email, &user.Bio, &user.IsActive, &user.CreatedAt},
+	); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
+	query := `SELECT id, name, username, password, email, is_active, created_at FROM users WHERE email = $1`
+
+	user := &User{}
+	if err := s.fetchUser(
+		ctx,
+		query,
+		[]any{email},
+		[]any{&user.ID, &user.Name, &user.Username, &user.Password.Hash, &user.Email, &user.IsActive, &user.CreatedAt},
+	); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *UserStore) Delete(ctx context.Context, id int64) error {
@@ -140,7 +177,13 @@ func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, token strin
 			return err
 		}
 
-		return s.createUserInvitation(ctx, tx, token, invitationExp, user.ID)
+		return s.createInvitation(ctx, tx, token, invitationExp, user.ID)
+	})
+}
+
+func (s *UserStore) CreateInvitation(ctx context.Context, token string, exp time.Duration, userID int64) error {
+	return withTx(ctx, s.db, func(tx *sql.Tx) error {
+		return s.createInvitation(ctx, tx, token, exp, userID)
 	})
 }
 
@@ -159,30 +202,20 @@ func (s *UserStore) Activate(ctx context.Context, token string) error {
 	})
 }
 
-func (s *UserStore) fetch(ctx context.Context, query string, args ...interface{}) (*User, error) {
+func (s *UserStore) fetchUser(ctx context.Context, query string, args []any, destArgs []any) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	user := &User{}
-
-	if err := s.db.QueryRowContext(ctx, query, args...).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Username,
-		&user.Email,
-		&user.Bio,
-		&user.IsActive,
-		&user.CreatedAt,
-	); err != nil {
+	if err := s.db.QueryRowContext(ctx, query, args...).Scan(destArgs...); err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			return nil, ErrNotFound
+			return ErrNotFound
 		default:
-			return nil, err
+			return err
 		}
 	}
 
-	return user, nil
+	return nil
 }
 
 func (s *UserStore) updateActivationStatus(ctx context.Context, tx *sql.Tx, status bool, userID int64) error {
@@ -248,7 +281,7 @@ func (s *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, token
 	return user, nil
 }
 
-func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {
+func (s *UserStore) createInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {
 	query := `INSERT INTO user_invitations (token, user_id, expiry) VALUES($1, $2, $3)`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
