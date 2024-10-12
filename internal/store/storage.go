@@ -45,6 +45,8 @@ type Storage struct {
 		CreateAndInvite(context.Context, *User, string, time.Duration) error
 		CreateInvitation(context.Context, string, time.Duration, int64) error
 		Activate(context.Context, string) error
+		CreatePasswordReset(context.Context, string, time.Duration, int64) error
+		ResetPassword(context.Context, string, []byte) error
 	}
 	Common interface {
 		GenerateUniqueSlug(context.Context, string, string) (string, error)

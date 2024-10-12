@@ -3,9 +3,10 @@ package mailer
 import "embed"
 
 var (
-	fromName           = "Communiverse Team"
-	maxRetries         = 3
-	InviteUserTemplate = "user_invitation.tmpl"
+	fromName               = "Communiverse Team"
+	maxRetries             = 3
+	InviteUserTemplate     = "user_invitation.gohtml"
+	ForgotPasswordTemplate = "forgot_password.gohtml"
 )
 
 //go:embed "templates"

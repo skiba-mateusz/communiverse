@@ -202,6 +202,90 @@ func (s *UserStore) Activate(ctx context.Context, token string) error {
 	})
 }
 
+func (s *UserStore) CreatePasswordReset(ctx context.Context, token string, exp time.Duration, userID int64) error {
+	query := `INSERT INTO password_resets (token, user_id, expiry) VALUES($1, $2, $3)`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query, token, userID, time.Now().Add(exp))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserStore) ResetPassword(ctx context.Context, token string, password []byte) error {
+	return withTx(ctx, s.db, func(tx *sql.Tx) error {
+		user, err := s.getUserFromPasswordReset(ctx, token, tx)
+		if err != nil {
+			return err
+		}
+
+		if err = s.updatePassword(ctx, password, user.ID, tx); err != nil {
+			return err
+		}
+
+		return s.deletePasswordReset(ctx, tx, user.ID)
+	})
+}
+
+func (s *UserStore) getUserFromPasswordReset(ctx context.Context, token string, tx *sql.Tx) (*User, error) {
+	query := `
+		SELECT u.id, u.name, u.username, email
+		FROM users u
+		INNER JOIN password_resets pr ON pr.user_id = u.id
+		WHERE pr.token = $1 AND expiry > $2
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	hash := sha256.Sum256([]byte(token))
+	hashToken := hex.EncodeToString(hash[:])
+
+	user := &User{}
+	err := tx.QueryRowContext(ctx, query, hashToken, time.Now()).Scan(&user.ID, &user.Name, &user.Username, &user.Email)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
+}
+
+func (s *UserStore) updatePassword(ctx context.Context, password []byte, userID int64, tx *sql.Tx) error {
+	query := `UPDATE users SET password = $1 WHERE id = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, query, password, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserStore) deletePasswordReset(ctx context.Context, tx *sql.Tx, userID int64) error {
+	query := `DELETE FROM password_resets WHERE user_id = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *UserStore) fetchUser(ctx context.Context, query string, args []any, destArgs []any) error {
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
