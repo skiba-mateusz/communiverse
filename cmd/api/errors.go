@@ -17,6 +17,11 @@ func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request,
 	writeJSONError(w, http.StatusNotFound, "resource not found")
 }
 
+func (app *application) conflictResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.logger.Warnw("conflict", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+	writeJSONError(w, http.StatusConflict, "resource already exists")
+}
+
 func (app *application) unauthorizedBasicResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logger.Warnw("unauthorized error", "method", r.Method, "path", r.URL.Path, "error", err.Error())
 	w.Header().Set("WWW-Authenticate", `Basic realm="admin", charset="UTF-8"`)

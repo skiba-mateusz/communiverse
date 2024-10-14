@@ -99,19 +99,29 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/posts", func(r chi.Router) {
+			r.Use(app.tokenAuthMiddleware)
+
 			r.Get("/", app.getPostsHandler)
 
 			r.Route("/{postSlug}", func(r chi.Router) {
-				r.Use(app.tokenAuthMiddleware)
 				r.Use(app.postContextMiddleware)
 
 				r.Get("/", app.getPostHandler)
 				r.Delete("/", app.deletePostHandler)
 				r.Patch("/", app.updatePostHandler)
+				r.Put("/vote", app.votePostHandler)
 
 				r.Route("/comments", func(r chi.Router) {
 					r.Post("/", app.createCommentHandler)
 				})
+			})
+		})
+
+		r.Route("/comments", func(r chi.Router) {
+			r.Use(app.tokenAuthMiddleware)
+
+			r.Route("/{id}", func(r chi.Router) {
+				r.Put("/vote", app.voteCommentHandler)
 			})
 		})
 

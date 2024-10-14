@@ -10,6 +10,7 @@ import (
 var (
 	QueryTimeoutDuration = time.Second * 5
 	ErrNotFound          = fmt.Errorf("resource not found")
+	ErrConflict          = fmt.Errorf("resource already exists")
 )
 
 type Storage struct {
@@ -24,16 +25,18 @@ type Storage struct {
 	}
 	Posts interface {
 		Create(context.Context, *Post) error
-		GetBySlug(context.Context, string) (*Post, error)
+		GetBySlug(context.Context, string, int64) (*Post, error)
 		Delete(context.Context, int64) error
 		Update(context.Context, *Post) error
-		GetCommunityPosts(context.Context, int64, PaginatedPostsQuery) ([]PostWithMetadata, error)
-		GetPosts(context.Context, PaginatedPostsQuery) ([]PostWithMetadata, error)
-		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]PostWithMetadata, error)
+		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]Post, error)
+		GetPosts(context.Context, int64, PaginatedPostsQuery) ([]Post, error)
+		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]Post, error)
+		Vote(context.Context, int, int64, int64) error
 	}
 	Comments interface {
 		Create(context.Context, *Comment) error
-		GetByPostID(context.Context, int64) ([]Comment, error)
+		GetByPostID(context.Context, int64, int64) ([]Comment, error)
+		Vote(context.Context, int, int64, int64) error
 	}
 	Users interface {
 		Create(context.Context, *sql.Tx, *User) error

@@ -53,20 +53,21 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 		UserID:      user.ID,
 	}
 
-	if err := app.store.Posts.Create(ctx, post); err != nil {
+	if err = app.store.Posts.Create(ctx, post); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusCreated, post); err != nil {
+	if err = jsonResponse(w, http.StatusCreated, post); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
 
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
+	user := getUserFromContext(r)
 
-	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID)
+	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID, user.ID)
 	if err != nil {
 		switch err {
 		case store.ErrNotFound:
@@ -176,8 +177,9 @@ func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.
 	}
 
 	community := getCommunityFromContext(r)
+	user := getUserFromContext(r)
 
-	posts, err := app.store.Posts.GetCommunityPosts(r.Context(), community.ID, query)
+	posts, err := app.store.Posts.GetCommunityPosts(r.Context(), community.ID, user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -206,7 +208,9 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	posts, err := app.store.Posts.GetPosts(r.Context(), query)
+	user := getUserFromContext(r)
+
+	posts, err := app.store.Posts.GetPosts(r.Context(), user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -217,13 +221,40 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+type VotePostPayload struct {
+	Value  *int  `json:"value" validate:"required,min=-1,max=1"`
+	PostID int64 `json:"postID" validate:"required"`
+}
+
+func (app *application) votePostHandler(w http.ResponseWriter, r *http.Request) {
+	var payload VotePostPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	user := getUserFromContext(r)
+
+	if err := app.store.Posts.Vote(r.Context(), *payload.Value, payload.PostID, user.ID); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "postSlug")
-
+		user := getUserFromContext(r)
 		ctx := r.Context()
 
-		post, err := app.store.Posts.GetBySlug(ctx, slug)
+		post, err := app.store.Posts.GetBySlug(ctx, slug, user.ID)
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:
