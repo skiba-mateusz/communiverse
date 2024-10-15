@@ -173,7 +173,7 @@ func (app *application) leaveCommunityHandler(w http.ResponseWriter, r *http.Req
 
 func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 	query := store.PaginatedCommunitiesQuery{
-		Limit:  5,
+		Limit:  10,
 		Offset: 0,
 	}
 
@@ -188,7 +188,9 @@ func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	communities, err := app.store.Communities.GetCommunities(r.Context(), query)
+	user := getUserFromContext(r)
+
+	communities, err := app.store.Communities.GetCommunities(r.Context(), user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
