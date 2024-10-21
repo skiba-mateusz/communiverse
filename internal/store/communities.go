@@ -5,28 +5,41 @@ import (
 	"database/sql"
 )
 
-type Community struct {
+type CommunityOverview struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+	IsMember bool   `json:"isMember"`
+}
+
+type CommunitySummary struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Slug        string `json:"slug"`
-	UserID      int64  `json:"userID"`
-	User        *User  `json:"user,omitempty"`
-	NumMembers  int    `json:"numMembers"`
-	NumPosts    int    `json:"numPosts"`
 	CreatedAt   string `json:"createdAt"`
+	IsMember    bool   `json:"isMember"`
+	NumMembers  int    `json:"numMembers"`
 }
 
-type CommunityWithMembership struct {
-	Community
-	IsMember bool `json:"isMember"`
+type CommunityDetails struct {
+	ID          int64       `json:"id"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Slug        string      `json:"slug"`
+	UserID      int64       `json:"creatorID"`
+	User        UserSummary `json:"creator"`
+	IsMember    bool        `json:"isMember"`
+	CreatedAt   string      `json:"createdAt"`
+	NumMembers  int         `json:"numMembers"`
+	NumPosts    int         `json:"numPosts"`
 }
 
 type CommunityStore struct {
 	db *sql.DB
 }
 
-func (s *CommunityStore) Create(ctx context.Context, community *Community) error {
+func (s *CommunityStore) Create(ctx context.Context, community *CommunityDetails) error {
 	return withTx(ctx, s.db, func(tx *sql.Tx) error {
 		if err := s.create(ctx, tx, community); err != nil {
 			return err
@@ -40,15 +53,18 @@ func (s *CommunityStore) Create(ctx context.Context, community *Community) error
 	})
 }
 
-func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int64) (*CommunityWithMembership, error) {
+func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int64) (*CommunityDetails, error) {
 	query := `
 		SELECT 
 			c.id, c.name, c.description, c.slug, c.user_id, c.created_at,
+			u.id, u.name, u.username, u.bio, u.created_at,
 			uc_user.user_id IS NOT NULL AS is_member,
 			COALESCE(COUNT(DISTINCT uc.user_id), 0) AS num_members,
 			COALESCE(COUNT(DISTINCT p.id), 0) AS num_posts
 		FROM 
 			communities c
+		INNER JOIN 
+			users u ON u.id = c.user_id
 		LEFT JOIN 
 			user_communities uc_user ON uc_user.community_id = c.id AND uc_user.user_id = $1  
 		LEFT JOIN 
@@ -58,13 +74,15 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 		WHERE 
 			c.slug = $2
 		GROUP BY 
-		    c.id, c.name, c.description, c.slug, c.user_id, c.created_at, uc_user.user_id
+		    c.id, c.name, c.description, c.slug, c.user_id, c.created_at, 
+		    u.id, u.name, u.username, u.bio, u.created_at,
+		    uc_user.user_id
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	var community CommunityWithMembership
+	var community CommunityDetails
 
 	err := s.db.QueryRowContext(
 		ctx,
@@ -78,6 +96,11 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 		&community.Slug,
 		&community.UserID,
 		&community.CreatedAt,
+		&community.User.ID,
+		&community.User.Name,
+		&community.User.Username,
+		&community.User.Bio,
+		&community.User.CreatedAt,
 		&community.IsMember,
 		&community.NumMembers,
 		&community.NumPosts,
@@ -121,7 +144,7 @@ func (s *CommunityStore) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *CommunityStore) Update(ctx context.Context, community *CommunityWithMembership) error {
+func (s *CommunityStore) Update(ctx context.Context, community *CommunityDetails) error {
 	query := `
 		UPDATE communities
 		SET name = $1, description = $2, slug = $3
@@ -193,13 +216,12 @@ func (s *CommunityStore) Leave(ctx context.Context, communityID, userID int64) e
 	return nil
 }
 
-func (s *CommunityStore) GetCommunities(ctx context.Context, userID int64, q PaginatedCommunitiesQuery) ([]CommunityWithMembership, error) {
+func (s *CommunityStore) GetAll(ctx context.Context, userID int64, q PaginatedCommunitiesQuery) ([]CommunitySummary, error) {
 	query := `
 		SELECT 
-			c.id, c.name, c.description, c.slug, c.user_id, c.created_at,
+			c.id, c.name, c.description, c.slug, c.created_at,
 			uc_user.user_id IS NOT NULL AS is_member,
-			COALESCE(COUNT(DISTINCT uc.user_id), 0) AS num_members,
-			COALESCE(COUNT(DISTINCT p.id), 0) AS num_posts
+			COALESCE(COUNT(DISTINCT uc.user_id), 0) AS num_members
 		FROM
 			communities c
 		LEFT JOIN 
@@ -220,7 +242,7 @@ func (s *CommunityStore) GetCommunities(ctx context.Context, userID int64, q Pag
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	communities := []CommunityWithMembership{}
+	communities := []CommunitySummary{}
 
 	rows, err := s.db.QueryContext(
 		ctx,
@@ -236,18 +258,16 @@ func (s *CommunityStore) GetCommunities(ctx context.Context, userID int64, q Pag
 	defer rows.Close()
 
 	for rows.Next() {
-		var community CommunityWithMembership
+		var community CommunitySummary
 
 		if err := rows.Scan(
 			&community.ID,
 			&community.Name,
 			&community.Description,
 			&community.Slug,
-			&community.UserID,
 			&community.CreatedAt,
 			&community.IsMember,
 			&community.NumMembers,
-			&community.NumPosts,
 		); err != nil {
 			return communities, err
 		}
@@ -262,7 +282,62 @@ func (s *CommunityStore) GetCommunities(ctx context.Context, userID int64, q Pag
 	return communities, nil
 }
 
-func (s *CommunityStore) create(ctx context.Context, tx *sql.Tx, community *Community) error {
+func (s *CommunityStore) GetUserCommunities(ctx context.Context, userID int64, q PaginatedCommunitiesQuery) ([]CommunityOverview, error) {
+	query := `
+		SELECT 
+			c.id, c.name, c.slug,
+			uc.user_id IS NOT NULL AS is_member
+		FROM
+			communities c
+		LEFT JOIN 
+			user_communities uc ON uc.community_id = c.id AND uc.user_id = $1
+		WHERE 
+		    uc.user_id IS NOT NULL
+		ORDER BY 
+		    c.name DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	communities := []CommunityOverview{}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		query,
+		userID,
+		q.Limit,
+		q.Offset,
+	)
+	if err != nil {
+		return communities, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var community CommunityOverview
+
+		if err := rows.Scan(
+			&community.ID,
+			&community.Name,
+			&community.Slug,
+			&community.IsMember,
+		); err != nil {
+			return communities, err
+		}
+
+		communities = append(communities, community)
+	}
+
+	if err = rows.Err(); err != nil {
+		return communities, err
+	}
+
+	return communities, nil
+}
+
+func (s *CommunityStore) create(ctx context.Context, tx *sql.Tx, community *CommunityDetails) error {
 	query := `
 	INSERT INTO communities (name, description, slug, user_id)
 	VALUES ($1, $2, $3, $4) RETURNING id, created_at

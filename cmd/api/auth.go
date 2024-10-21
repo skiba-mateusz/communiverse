@@ -33,7 +33,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user := &store.User{
+	user := &store.UserDetails{
 		Name:     payload.Name,
 		Username: payload.Username,
 		Email:    payload.Email,
@@ -47,7 +47,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	plainToken, hashToken := generateTokenAndHash()
 
-	if err := app.store.Users.CreateAndInvite(r.Context(), user, hashToken, app.config.mail.exp); err != nil {
+	if err := app.store.Users.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp); err != nil {
 		switch err {
 		case store.ErrDuplicateEmail:
 			app.badRequestResponse(w, r, err)
@@ -221,7 +221,7 @@ func (app *application) resetPasswordHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user := &store.User{}
+	user := &store.UserDetails{}
 	if err := user.Password.Set(payload.Password); err != nil {
 		app.internalServerError(w, r, err)
 		return

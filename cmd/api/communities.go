@@ -41,11 +41,12 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 
 	user := getUserFromContext(r)
 
-	community := &store.Community{
+	community := &store.CommunityDetails{
 		Name:        payload.Name,
 		Description: payload.Description,
 		Slug:        slug,
 		UserID:      user.ID,
+		IsMember:    true,
 	}
 
 	if err := app.store.Communities.Create(ctx, community); err != nil {
@@ -190,7 +191,7 @@ func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Req
 
 	user := getUserFromContext(r)
 
-	communities, err := app.store.Communities.GetCommunities(r.Context(), user.ID, query)
+	communities, err := app.store.Communities.GetAll(r.Context(), user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -226,7 +227,7 @@ func (app *application) communityContextMiddleware(next http.Handler) http.Handl
 	})
 }
 
-func getCommunityFromContext(r *http.Request) *store.CommunityWithMembership {
-	community := r.Context().Value(communityCtx).(*store.CommunityWithMembership)
+func getCommunityFromContext(r *http.Request) *store.CommunityDetails {
+	community := r.Context().Value(communityCtx).(*store.CommunityDetails)
 	return community
 }

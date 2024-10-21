@@ -6,28 +6,43 @@ import (
 	"github.com/lib/pq"
 )
 
-type Post struct {
-	ID          int64      `json:"id"`
-	Title       string     `json:"title"`
-	Content     string     `json:"content"`
-	Slug        string     `json:"slug"`
-	Tags        []string   `json:"tags"`
-	Comments    []Comment  `json:"comments"`
-	NumComments int        `json:"numComments"`
-	CommunityID int64      `json:"communityID"`
-	Community   *Community `josn:"community,omitempty"`
-	UserID      int64      `json:"userID"`
-	User        *User      `json:"user,omitempty"`
-	Votes       int        `json:"votes"`
-	UserVote    int        `json:"userVote"`
-	CreatedAt   string     `json:"createdAt"`
+type PostSummary struct {
+	ID          int64             `json:"id"`
+	Title       string            `json:"title"`
+	Slug        string            `json:"slug"`
+	Tags        []string          `json:"tags"`
+	CommunityID int64             `json:"communityID"`
+	Community   CommunityOverview `json:"community"`
+	UserID      int64             `json:"authorID"`
+	User        UserOverview      `json:"author"`
+	NumComments int               `json:"numComments"`
+	Votes       int               `json:"votes"`
+	UserVote    int               `json:"userVote"`
+	CreatedAt   string            `json:"createdAt"`
+}
+
+type PostDetails struct {
+	ID          int64            `json:"id"`
+	Title       string           `json:"title"`
+	Content     string           `json:"content"`
+	Slug        string           `json:"slug"`
+	Tags        []string         `json:"tags"`
+	CommunityID int64            `json:"communityID"`
+	Community   CommunitySummary `json:"community"`
+	UserID      int64            `json:"authorID"`
+	User        UserSummary      `json:"author"`
+	Comments    []Comment        `json:"comments"`
+	NumComments int              `json:"numComments"`
+	Votes       int              `json:"votes"`
+	UserVote    int              `json:"UserVote"`
+	CreatedAt   string           `json:"createdAt"`
 }
 
 type PostStore struct {
 	db *sql.DB
 }
 
-func (s *PostStore) Create(ctx context.Context, post *Post) error {
+func (s *PostStore) Create(ctx context.Context, post *PostDetails) error {
 	query := `
 		INSERT INTO posts (title, content, slug, tags, community_id, user_id)
 		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at
@@ -56,60 +71,73 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*Post, error) {
+func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*PostDetails, error) {
 	query := `
 		SELECT 
-			p.id, p.title, p.content, p.slug, p.tags, p.user_id, p.community_id, p.created_at,
-			u.id, u.name, u.username, u.bio,
-			COALESCE(COUNT(DISTINCT c.id), 0) AS num_comments,
-			COALESCE((SELECT SUM(value) FROM post_votes WHERE post_id = p.id), 0) AS votes,
-			COALESCE(pv_user.value, 0) AS user_vote
+			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			c.id, c.name, c.description, c.slug, c.created_at,
+			uc.user_id IS NOT NULL AS is_member,   
+			COALESCE(tm.num_members, 0) AS num_members,
+			u.id, u.name, u.username, u.bio, u.created_at,
+			COALESCE(COUNT(cm.id), 0) AS num_comments,
+			COALESCE(tv.total_votes, 0) AS votes,
+			COALESCE(uv.user_vote, 0) AS user_vote
 		FROM 
 		    posts p  
+		INNER JOIN  
+		    communities c ON c.id = p.community_id
 		INNER JOIN 
 		    users u ON u.id = p.user_id
 		LEFT JOIN 
-		    comments c ON c.post_id = p.id
-		LEFT JOIN post_votes pv_user ON pv_user.post_id = p.id AND pv_user.user_id = $1
+		    comments cm ON cm.post_id = p.id
+		LEFT JOIN 
+		    user_communities uc ON uc.community_id = c.id AND uc.user_id = $1 
+		LEFT JOIN 
+		    (SELECT community_id, count(user_id) AS num_members FROM user_communities GROUP BY community_id) tm ON tm.community_id = c.id
+		LEFT JOIN 
+		    (SELECT post_id, SUM(value) AS total_votes FROM post_votes GROUP BY post_id) tv ON tv.post_id = p.id
+		LEFT JOIN
+		    (SELECT post_id, value AS user_vote FROM post_votes WHERE user_id = $1) uv ON uv.post_id = p.id
 		WHERE p.slug = $2
-		GROUP BY p.id, u.id, pv_user.value
+		GROUP BY 
+		    p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			c.id, c.name, c.slug, c.user_id, c.created_at,
+			u.id, u.name, u.username, u.bio, u.created_at,
+			uc.user_id, tm.num_members, tv.total_votes, uv.user_vote
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	var post Post
-	post.User = &User{}
+	post := PostDetails{}
 
-	err := s.db.QueryRowContext(
-		ctx,
-		query,
-		userID,
-		slug,
-	).Scan(
+	err := s.db.QueryRowContext(ctx, query, userID, slug).Scan(
 		&post.ID,
 		&post.Title,
 		&post.Content,
-		&post.Slug,
 		pq.Array(&post.Tags),
+		&post.Slug,
 		&post.UserID,
 		&post.CommunityID,
 		&post.CreatedAt,
+		&post.Community.ID,
+		&post.Community.Name,
+		&post.Community.Description,
+		&post.Community.Slug,
+		&post.Community.CreatedAt,
+		&post.Community.IsMember,
+		&post.Community.NumMembers,
 		&post.User.ID,
 		&post.User.Name,
 		&post.User.Username,
 		&post.User.Bio,
+		&post.User.CreatedAt,
 		&post.NumComments,
 		&post.Votes,
 		&post.UserVote,
 	)
 	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
-			return nil, ErrNotFound
-		default:
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return &post, nil
@@ -142,7 +170,7 @@ func (s *PostStore) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *PostStore) Update(ctx context.Context, post *Post) error {
+func (s *PostStore) Update(ctx context.Context, post *PostDetails) error {
 	query := `
 		UPDATE posts SET title = $1, content = $2, tags = $3, slug = $4 WHERE id = $5
 	`
@@ -174,114 +202,16 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID, userID int64, q PaginatedPostsQuery) ([]Post, error) {
-	query := `
-		SELECT
-			p.id, p.title, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
-			c.id, c.name, c.slug, c.user_id,			
-			u.id, u.name, u.username,
-			COALESCE(COUNT(DISTINCT cm.id), 0) AS num_comments,
-			COALESCE(vote_totals.total_votes, 0) AS votes,
-			COALESCE(pv_user.value, 0) AS user_vote
-		FROM 
-			posts p
-		INNER JOIN 
-			communities c ON c.id = p.community_id
-		INNER JOIN
-			users u ON u.id = p.user_id
-		LEFT JOIN
-			comments cm ON cm.post_id = p.id
-		LEFT JOIN 
-			(SELECT post_id, SUM(value) AS total_votes 
-			 FROM post_votes
-			 GROUP BY post_id) AS vote_totals ON vote_totals.post_id = p.id
-		LEFT JOIN 
-			post_votes pv_user ON pv_user.post_id = p.id AND pv_user.user_id = $1
-		WHERE
-			c.id = $2 AND
-			(p.title ILIKE '%' || $3 || '%' OR p.content ILIKE '%' || $3 || '%')
-		GROUP BY p.id, u.id, c.id, pv_user.value, vote_totals.total_votes
-		ORDER BY p.created_at ` + q.Sort + `
-		LIMIT $4 OFFSET $5
-	`
-
-	posts, err := s.fetchPosts(ctx, query, userID, communityID, q.Search, q.Limit, q.Offset)
-	if err != nil {
-		return []Post{}, err
-	}
-
-	for i := range posts {
-		posts[i].Community = nil
-	}
-
-	return posts, nil
+func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
+	return s.fetchPosts(ctx, userID, &communityID, q, false)
 }
 
-func (s *PostStore) GetPosts(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]Post, error) {
-	query := `
-		SELECT
-			p.id, p.title, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
-			c.id, c.name, c.slug, c.user_id,
-			u.id, u.name, u.username,
-			COALESCE(COUNT(DISTINCT cm.id), 0) AS num_comments,
-			COALESCE(vote_totals.total_votes, 0) AS votes,
-			COALESCE(pv_user.value, 0) AS user_vote
-		FROM 
-			posts p
-		INNER JOIN 
-			communities c ON c.id = p.community_id
-		INNER JOIN
-			users u ON u.id = p.user_id
-		LEFT JOIN
-			comments cm ON cm.post_id = p.id
-		LEFT JOIN 
-			(SELECT post_id, SUM(value) AS total_votes 
-			 FROM post_votes
-			 GROUP BY post_id) AS vote_totals ON vote_totals.post_id = p.id
-		LEFT JOIN 
-			post_votes pv_user ON pv_user.post_id = p.id AND pv_user.user_id = $1
-		WHERE
-			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
-		GROUP BY p.id, u.id, c.id, pv_user.value, vote_totals.total_votes
-		ORDER BY p.created_at ` + q.Sort + `
-		LIMIT $3 OFFSET $4
-	`
-	return s.fetchPosts(ctx, query, userID, q.Search, q.Limit, q.Offset)
+func (s *PostStore) GetAll(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
+	return s.fetchPosts(ctx, userID, nil, q, false)
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]Post, error) {
-	query := `
-		SELECT 
-			p.id, p.title, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
-			c.id, c.name, c.slug, c.user_id,
-			u.id, u.name, u.username,
-			COALESCE(COUNT(DISTINCT cm.id), 0) AS num_comments,
-			COALESCE(vote_totals.total_votes, 0) AS votes,
-			COALESCE(pv_user.value, 0) AS user_vote
-		FROM 
-			posts p
-		INNER JOIN 
-			communities c ON c.id = p.community_id
-		INNER JOIN 
-			users u ON u.id = p.user_id
-		INNER JOIN
-			user_communities uc ON uc.community_id = p.community_id AND uc.user_id = $1
-		LEFT JOIN
-			comments cm ON cm.post_id = p.id
-		LEFT JOIN 
-			(SELECT post_id, SUM(value) AS total_votes 
-			 FROM post_votes
-			 GROUP BY post_id) AS vote_totals ON vote_totals.post_id = p.id
-		LEFT JOIN 
-			post_votes pv_user ON pv_user.post_id = p.id AND pv_user.user_id = $1
-		WHERE 
-			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
-		GROUP BY p.id, c.id, u.id, pv_user.value, vote_totals.total_votes
-		ORDER BY p.created_at ` + q.Sort + `
-		LIMIT $3 OFFSET $4
-	`
-
-	return s.fetchPosts(ctx, query, userID, q.Search, q.Limit, q.Offset)
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
+	return s.fetchPosts(ctx, userID, nil, q, true)
 }
 
 func (s *PostStore) Vote(ctx context.Context, value int, postID, userID int64) error {
@@ -303,30 +233,90 @@ func (s *PostStore) Vote(ctx context.Context, value int, postID, userID int64) e
 	return nil
 }
 
-func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interface{}) ([]Post, error) {
-	posts := []Post{}
+func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *int64, q PaginatedPostsQuery, isFeed bool) ([]PostSummary, error) {
+	baseQuery := `
+		SELECT 
+			p.id, p.title, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
+			c.id, c.name, c.slug,
+			uc.user_id IS NOT NULL AS is_member,   
+			u.id, u.name, u.username,
+			COALESCE(COUNT(cm.id), 0) AS num_comments,
+			COALESCE(tv.total_votes, 0) AS votes,
+			COALESCE(uv.user_vote, 0) AS user_vote
+		FROM 
+			posts p
+		INNER JOIN 
+			communities c ON c.id = p.community_id
+		INNER JOIN 
+			users u ON u.id = p.user_id
+		INNER JOIN
+			user_communities uc ON uc.community_id = p.community_id AND uc.user_id = $1
+		LEFT JOIN
+			comments cm ON cm.post_id = p.id
+		LEFT JOIN 
+		    (SELECT post_id, SUM(value) AS total_votes FROM post_votes GROUP BY post_id) tv ON tv.post_id = p.id
+		LEFT JOIN
+		    (SELECT post_id, value AS user_vote FROM post_votes WHERE user_id = $1) uv ON uv.post_id = p.id
+		WHERE 
+			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
+	`
+
+	var args []any
+
+	if communityID != nil {
+		baseQuery += `
+			AND c.id = $3
+			GROUP BY 
+		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
+		    	c.id, c.name, c.description, c.slug, c.user_id, 
+		    	u.id, u.name, u.username, u.bio, 
+		    	uc.user_id, tv.total_votes, uv.user_vote
+			ORDER BY p.created_at ` + q.Sort + `
+			LIMIT $4 OFFSET $5
+		`
+		args = append(args, userID, q.Search, *communityID, q.Limit, q.Offset)
+	} else {
+		args = append(args, userID, q.Search, q.Limit, q.Offset)
+		if isFeed {
+			baseQuery += `
+			AND uc.user_id IS NOT NULL
+			GROUP BY 
+		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
+		    	c.id, c.name, c.description, c.slug, c.user_id, 
+		    	u.id, u.name, u.username, u.bio, 
+		    	uc.user_id, tv.total_votes, uv.user_vote
+			ORDER BY p.created_at ` + q.Sort + `
+			LIMIT $3 OFFSET $4
+		`
+		} else {
+			baseQuery += `
+			GROUP BY 
+		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
+		    	c.id, c.name, c.description, c.slug, c.user_id, 
+		    	u.id, u.name, u.username, u.bio, 
+		    	uc.user_id, tv.total_votes, uv.user_vote
+			ORDER BY p.created_at ` + q.Sort + `
+			LIMIT $3 OFFSET $4
+		`
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	rows, err := s.db.QueryContext(
-		ctx,
-		query,
-		args...,
-	)
+	posts := []PostSummary{}
+
+	rows, err := s.db.QueryContext(ctx, baseQuery, args...)
 	if err != nil {
 		return posts, err
 	}
-	defer rows.Close()
 
 	for rows.Next() {
-		var post Post
+		post := PostSummary{}
+		post.User = UserOverview{}
+		post.Community = CommunityOverview{}
 
-		post.User = &User{}
-		post.Community = &Community{}
-		post.Comments = []Comment{}
-
-		if err := rows.Scan(
+		if err = rows.Scan(
 			&post.ID,
 			&post.Title,
 			pq.Array(&post.Tags),
@@ -337,7 +327,7 @@ func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interf
 			&post.Community.ID,
 			&post.Community.Name,
 			&post.Community.Slug,
-			&post.Community.UserID,
+			&post.Community.IsMember,
 			&post.User.ID,
 			&post.User.Name,
 			&post.User.Username,
@@ -351,9 +341,70 @@ func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interf
 		posts = append(posts, post)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return posts, err
 	}
 
 	return posts, nil
 }
+
+//func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interface{}) ([]Post, error) {
+//	posts := []Post{}
+//
+//	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+//	defer cancel()
+//
+//	rows, err := s.db.QueryContext(
+//		ctx,
+//		query,
+//		args...,
+//	)
+//	if err != nil {
+//		return posts, err
+//	}
+//	defer rows.Close()
+//
+//	for rows.Next() {
+//		var post Post
+//
+//		post.User = User{}
+//		post.Community = Community{}
+//		post.Comments = []Comment{}
+//
+//		if err = rows.Scan(
+//			&post.ID,
+//			&post.Title,
+//			&post.Content,
+//			pq.Array(&post.Tags),
+//			&post.Slug,
+//			&post.UserID,
+//			&post.CommunityID,
+//			&post.CreatedAt,
+//			&post.Community.ID,
+//			&post.Community.Name,
+//			&post.Community.Description,
+//			&post.Community.Slug,
+//			&post.Community.UserID,
+//			&post.Community.CreatedAt,
+//			&post.Community.IsMember,
+//			&post.User.ID,
+//			&post.User.Name,
+//			&post.User.Username,
+//			&post.User.Bio,
+//			&post.User.CreatedAt,
+//			&post.NumComments,
+//			&post.Votes,
+//			&post.UserVote,
+//		); err != nil {
+//			return posts, err
+//		}
+//
+//		posts = append(posts, post)
+//	}
+//
+//	if err := rows.Err(); err != nil {
+//		return posts, err
+//	}
+//
+//	return posts, nil
+//}

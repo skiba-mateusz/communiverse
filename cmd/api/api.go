@@ -133,12 +133,12 @@ func (app *application) mount() http.Handler {
 
 				r.Get("/me", app.getCurrentUserHandler)
 				r.Get("/feed", app.getCurrentUserFeedHandler)
+				r.Get("/communities", app.getCurrentUserCommunitiesHandler)
 				r.Delete("/", app.deleteCurrentUserHandler)
 				r.Patch("/", app.updateCurrentUserHandler)
 
 				r.Route("/{username}", func(r chi.Router) {
 					r.Get("/", app.getUserHandler)
-
 				})
 			})
 		})

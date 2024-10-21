@@ -198,11 +198,11 @@ func Seed(store store.Storage, db *sql.DB) {
 	}
 }
 
-func generateUsers(num int) []*store.User {
-	users := make([]*store.User, num)
+func generateUsers(num int) []*store.UserDetails {
+	users := make([]*store.UserDetails, num)
 
 	for i := 0; i < num; i++ {
-		users[i] = &store.User{
+		users[i] = &store.UserDetails{
 			Name:     names[i%len(names)],
 			Username: fmt.Sprintf("%s%d", usernames[i%len(usernames)], i),
 			Email:    fmt.Sprintf("%s%d@example.com", usernames[i%len(usernames)], i),
@@ -213,13 +213,13 @@ func generateUsers(num int) []*store.User {
 	return users
 }
 
-func generateCommunities(users []*store.User) []*store.Community {
-	c := make([]*store.Community, 0, len(communities))
+func generateCommunities(users []*store.UserDetails) []*store.CommunityDetails {
+	c := make([]*store.CommunityDetails, 0, len(communities))
 
 	for name, description := range communities {
 		user := users[rand.Intn(len(users))]
 
-		c = append(c, &store.Community{
+		c = append(c, &store.CommunityDetails{
 			UserID:      user.ID,
 			Name:        name,
 			Description: description,
@@ -230,7 +230,7 @@ func generateCommunities(users []*store.User) []*store.Community {
 	return c
 }
 
-func generateUserCommunities(num int, communities []*store.Community, users []*store.User) map[int64]int64 {
+func generateUserCommunities(num int, communities []*store.CommunityDetails, users []*store.UserDetails) map[int64]int64 {
 	uc := map[int64]int64{}
 
 	for i := 0; i < num; i++ {
@@ -242,8 +242,8 @@ func generateUserCommunities(num int, communities []*store.Community, users []*s
 	return uc
 }
 
-func generatePosts(num int, communities []*store.Community, users []*store.User) []*store.Post {
-	p := make([]*store.Post, num)
+func generatePosts(num int, communities []*store.CommunityDetails, users []*store.UserDetails) []*store.PostDetails {
+	p := make([]*store.PostDetails, num)
 
 	for i := 0; i < num; i++ {
 		user := users[rand.Intn(len(users))]
@@ -251,7 +251,7 @@ func generatePosts(num int, communities []*store.Community, users []*store.User)
 
 		title := titles[i%len(titles)]
 
-		p[i] = &store.Post{
+		p[i] = &store.PostDetails{
 			Title:       title,
 			Content:     contents[i%len(contents)],
 			Tags:        []string{tags[i%len(tags)]},
@@ -264,7 +264,7 @@ func generatePosts(num int, communities []*store.Community, users []*store.User)
 	return p
 }
 
-func generateComments(num int, users []*store.User, posts []*store.Post) []*store.Comment {
+func generateComments(num int, users []*store.UserDetails, posts []*store.PostDetails) []*store.Comment {
 	c := make([]*store.Comment, num)
 
 	for i := 0; i < num; i++ {

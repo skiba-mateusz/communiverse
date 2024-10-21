@@ -26,7 +26,7 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	if err := Validate.Struct(query); err != nil {
+	if err = Validate.Struct(query); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
@@ -40,6 +40,36 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 	}
 
 	if err := jsonResponse(w, http.StatusOK, posts); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) getCurrentUserCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
+	query := store.PaginatedCommunitiesQuery{
+		Limit:  10,
+		Offset: 0,
+	}
+
+	query, err := query.Parse(r)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err = Validate.Struct(query); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	user := getUserFromContext(r)
+
+	communities, err := app.store.Communities.GetUserCommunities(r.Context(), user.ID, query)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err = jsonResponse(w, http.StatusOK, communities); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -152,7 +182,7 @@ func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func getUserFromContext(r *http.Request) *store.User {
-	user := r.Context().Value(userCtx).(*store.User)
+func getUserFromContext(r *http.Request) *store.UserDetails {
+	user := r.Context().Value(userCtx).(*store.UserDetails)
 	return user
 }

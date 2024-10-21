@@ -10,27 +10,27 @@ import (
 var (
 	QueryTimeoutDuration = time.Second * 5
 	ErrNotFound          = fmt.Errorf("resource not found")
-	ErrConflict          = fmt.Errorf("resource already exists")
 )
 
 type Storage struct {
 	Communities interface {
-		Create(context.Context, *Community) error
-		GetBySlug(context.Context, string, int64) (*CommunityWithMembership, error)
+		Create(context.Context, *CommunityDetails) error
+		GetBySlug(context.Context, string, int64) (*CommunityDetails, error)
 		Delete(context.Context, int64) error
-		Update(context.Context, *CommunityWithMembership) error
+		Update(context.Context, *CommunityDetails) error
 		Join(context.Context, int64, int64) error
 		Leave(context.Context, int64, int64) error
-		GetCommunities(context.Context, int64, PaginatedCommunitiesQuery) ([]CommunityWithMembership, error)
+		GetAll(context.Context, int64, PaginatedCommunitiesQuery) ([]CommunitySummary, error)
+		GetUserCommunities(context.Context, int64, PaginatedCommunitiesQuery) ([]CommunityOverview, error)
 	}
 	Posts interface {
-		Create(context.Context, *Post) error
-		GetBySlug(context.Context, string, int64) (*Post, error)
+		Create(context.Context, *PostDetails) error
+		GetBySlug(context.Context, string, int64) (*PostDetails, error)
 		Delete(context.Context, int64) error
-		Update(context.Context, *Post) error
-		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]Post, error)
-		GetPosts(context.Context, int64, PaginatedPostsQuery) ([]Post, error)
-		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]Post, error)
+		Update(context.Context, *PostDetails) error
+		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]PostSummary, error)
+		GetAll(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, error)
+		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, error)
 		Vote(context.Context, int, int64, int64) error
 	}
 	Comments interface {
@@ -39,14 +39,13 @@ type Storage struct {
 		Vote(context.Context, int, int64, int64) error
 	}
 	Users interface {
-		Create(context.Context, *sql.Tx, *User) error
-		GetByUsername(context.Context, string) (*User, error)
-		GetByID(context.Context, int64) (*User, error)
-		GetByEmail(context.Context, string) (*User, error)
+		Create(context.Context, *sql.Tx, *UserDetails) error
+		GetByUsername(context.Context, string) (*UserSummary, error)
+		GetByID(context.Context, int64) (*UserDetails, error)
+		GetByEmail(context.Context, string) (*UserDetails, error)
 		Delete(context.Context, int64) error
-		Update(context.Context, *User) error
-		CreateAndInvite(context.Context, *User, string, time.Duration) error
-		CreateInvitation(context.Context, string, time.Duration, int64) error
+		Update(context.Context, *UserDetails) error
+		CreateAndInvite(context.Context, *UserDetails, string, time.Duration) error
 		Activate(context.Context, string) error
 		CreatePasswordReset(context.Context, string, time.Duration, int64) error
 		ResetPassword(context.Context, string, []byte) error

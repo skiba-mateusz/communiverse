@@ -32,7 +32,11 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 		Content: payload.Content,
 		PostID:  post.ID,
 		UserID:  user.ID,
-		User:    &store.User{},
+		User: store.UserOverview{
+			ID:       user.ID,
+			Name:     user.Name,
+			Username: user.Username,
+		},
 	}
 
 	if err := app.store.Comments.Create(ctx, comment); err != nil {

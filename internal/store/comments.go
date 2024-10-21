@@ -6,15 +6,14 @@ import (
 )
 
 type Comment struct {
-	ID        int64  `json:"id"`
-	Content   string `json:"content"`
-	PostID    int64  `json:"postID"`
-	Post      *Post  `json:"post,omitempty"`
-	UserID    int64  `json:"userID"`
-	User      *User  `json:"user,omitempty"`
-	NumVotes  int    `json:"numVotes"`
-	UserVote  int    `json:"userVote"`
-	CreatedAt string `json:"createdAt"`
+	ID        int64        `json:"id"`
+	Content   string       `json:"content"`
+	PostID    int64        `json:"postID"`
+	UserID    int64        `json:"authorID"`
+	User      UserOverview `json:"author"`
+	CreatedAt string       `json:"createdAt"`
+	NumVotes  int          `json:"numVotes"`
+	UserVote  int          `json:"userVote"`
 }
 
 type CommentStore struct {
@@ -52,14 +51,18 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 		SELECT 
 			c.id, c.content, c.user_id, c.post_id, c.created_at, 
 			u.id, u.name, u.username,
-			COALESCE(SUM(DISTINCT cv.value), 0) AS num_votes,
-			COALESCE(cv_user.value, 0) AS user_vote
+			COALESCE(SUM(cv.value), 0) AS num_votes,
+			COALESCE(uv.value, 0) AS user_vote
 		FROM comments c
 		INNER JOIN users u ON c.user_id = u.id
 		LEFT JOIN comment_votes cv ON cv.comment_id = c.id
-		LEFT JOIN comment_votes cv_user ON cv_user.comment_id = c.id AND cv_user.user_id = $1
+		LEFT JOIN comment_votes uv ON uv.comment_id = c.id AND uv.user_id = $1
 		WHERE c.post_id = $2
-		GROUP BY c.id, u.id, cv_user.value
+		GROUP BY 
+			c.id, c.content, c.user_id, c.post_id, c.created_at, 
+			u.id, u.name, u.username, u.bio, u.created_at,
+			uv.value
+		ORDER BY c.created_at DESC
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -80,7 +83,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 
 	for rows.Next() {
 		var comment Comment
-		comment.User = &User{}
+		comment.User = UserOverview{}
 
 		if err := rows.Scan(
 			&comment.ID,

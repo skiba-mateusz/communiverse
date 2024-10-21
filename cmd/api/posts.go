@@ -44,13 +44,13 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 
 	user := getUserFromContext(r)
 
-	post := &store.Post{
+	post := &store.PostDetails{
 		Title:       payload.Title,
-		Content:     payload.Content,
 		Slug:        slug,
 		Tags:        payload.Tags,
 		CommunityID: community.ID,
 		UserID:      user.ID,
+		Content:     payload.Content,
 	}
 
 	if err = app.store.Posts.Create(ctx, post); err != nil {
@@ -210,7 +210,7 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 
 	user := getUserFromContext(r)
 
-	posts, err := app.store.Posts.GetPosts(r.Context(), user.ID, query)
+	posts, err := app.store.Posts.GetAll(r.Context(), user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -271,7 +271,7 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getPostFromContext(r *http.Request) *store.Post {
-	post := r.Context().Value(postCtx).(*store.Post)
+func getPostFromContext(r *http.Request) *store.PostDetails {
+	post := r.Context().Value(postCtx).(*store.PostDetails)
 	return post
 }
