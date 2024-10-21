@@ -75,81 +75,111 @@ func (app *application) mount() http.Handler {
 	r.Route("/v1", func(r chi.Router) {
 		r.With(app.basicAuthMiddleware()).Get("/health", app.healthHandler)
 
-		r.Route("/communities", func(r chi.Router) {
-			r.Use(app.tokenAuthMiddleware)
+		r.Mount("/communities", app.communityRoutes())
 
-			r.Post("/", app.createCommunityHandler)
-			r.Get("/", app.getCommunitiesHandler)
+		r.Mount("/posts", app.postRoutes())
 
-			r.Route("/{communitySlug}", func(r chi.Router) {
-				r.Use(app.communityContextMiddleware)
+		r.Mount("/comments", app.commentRoutes())
 
-				r.Get("/", app.getCommunityHandler)
-				r.Delete("/", app.deleteCommunityHandler)
-				r.Patch("/", app.updateCommunityHandler)
+		r.Mount("/users", app.userRoutes())
 
-				r.Post("/join", app.joinCommunityHandler)
-				r.Delete("/leave", app.leaveCommunityHandler)
+		r.Mount("/auth", app.authRoutes())
+	})
 
-				r.Route("/posts", func(r chi.Router) {
-					r.Get("/", app.getCommunityPostsHandler)
-					r.Post("/", app.createPostHandler)
-				})
-			})
-		})
+	return r
+}
+
+func (app *application) communityRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(app.tokenAuthMiddleware)
+
+	r.Post("/", app.createCommunityHandler)
+	r.Get("/", app.getCommunitiesHandler)
+
+	r.Route("/{communitySlug}", func(r chi.Router) {
+		r.Use(app.communityContextMiddleware)
+
+		r.Get("/", app.getCommunityHandler)
+		r.Delete("/", app.deleteCommunityHandler)
+		r.Patch("/", app.updateCommunityHandler)
+
+		r.Post("/join", app.joinCommunityHandler)
+		r.Delete("/leave", app.leaveCommunityHandler)
 
 		r.Route("/posts", func(r chi.Router) {
-			r.Use(app.tokenAuthMiddleware)
-
-			r.Get("/", app.getPostsHandler)
-
-			r.Route("/{postSlug}", func(r chi.Router) {
-				r.Use(app.postContextMiddleware)
-
-				r.Get("/", app.getPostHandler)
-				r.Delete("/", app.deletePostHandler)
-				r.Patch("/", app.updatePostHandler)
-				r.Put("/vote", app.votePostHandler)
-
-				r.Route("/comments", func(r chi.Router) {
-					r.Post("/", app.createCommentHandler)
-				})
-			})
-		})
-
-		r.Route("/comments", func(r chi.Router) {
-			r.Use(app.tokenAuthMiddleware)
-
-			r.Route("/{id}", func(r chi.Router) {
-				r.Put("/vote", app.voteCommentHandler)
-			})
-		})
-
-		r.Route("/users", func(r chi.Router) {
-			r.Put("/activate/{token}", app.activateUserHandler)
-
-			r.Group(func(r chi.Router) {
-				r.Use(app.tokenAuthMiddleware)
-
-				r.Get("/me", app.getCurrentUserHandler)
-				r.Get("/feed", app.getCurrentUserFeedHandler)
-				r.Get("/communities", app.getCurrentUserCommunitiesHandler)
-				r.Delete("/", app.deleteCurrentUserHandler)
-				r.Patch("/", app.updateCurrentUserHandler)
-
-				r.Route("/{username}", func(r chi.Router) {
-					r.Get("/", app.getUserHandler)
-				})
-			})
-		})
-
-		r.Route("/auth", func(r chi.Router) {
-			r.Post("/register", app.registerUserHandler)
-			r.Post("/login", app.loginUserHandler)
-			r.Post("/forgot-password", app.forgotPasswordHandler)
-			r.Put("/reset-password/{token}", app.resetPasswordHandler)
+			r.Get("/", app.getCommunityPostsHandler)
+			r.Post("/", app.createCommunityPostHandler)
 		})
 	})
+
+	return r
+}
+
+func (app *application) postRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(app.tokenAuthMiddleware)
+
+	r.Get("/", app.getPostsHandler)
+
+	r.Route("/{postSlug}", func(r chi.Router) {
+		r.Use(app.postContextMiddleware)
+
+		r.Get("/", app.getPostHandler)
+		r.Delete("/", app.deletePostHandler)
+		r.Patch("/", app.updatePostHandler)
+		r.Put("/vote", app.votePostHandler)
+
+		r.Route("/comments", func(r chi.Router) {
+			r.Post("/", app.createCommentHandler)
+		})
+	})
+
+	return r
+}
+
+func (app *application) commentRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(app.tokenAuthMiddleware)
+
+	r.Route("/{id}", func(r chi.Router) {
+		r.Put("/vote", app.voteCommentHandler)
+	})
+
+	return r
+}
+
+func (app *application) userRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Put("/activate/{token}", app.activateUserHandler)
+
+	r.Group(func(r chi.Router) {
+		r.Use(app.tokenAuthMiddleware)
+
+		r.Get("/me", app.getCurrentUserHandler)
+		r.Get("/feed", app.getCurrentUserFeedHandler)
+		r.Get("/communities", app.getCurrentUserCommunitiesHandler)
+		r.Delete("/", app.deleteCurrentUserHandler)
+		r.Patch("/", app.updateCurrentUserHandler)
+
+		r.Route("/{username}", func(r chi.Router) {
+			r.Get("/", app.getUserHandler)
+		})
+	})
+
+	return r
+}
+
+func (app *application) authRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Post("/register", app.registerUserHandler)
+	r.Post("/login", app.loginUserHandler)
+	r.Post("/forgot-password", app.forgotPasswordHandler)
+	r.Put("/reset-password/{token}", app.resetPasswordHandler)
 
 	return r
 }

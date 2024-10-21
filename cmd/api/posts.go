@@ -20,7 +20,7 @@ type CreatePostPayload struct {
 	Tags    []string `json:"tags" validate:"required"`
 }
 
-func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createCommunityPostHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
