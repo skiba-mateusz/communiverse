@@ -5,7 +5,16 @@ import (
 	"database/sql"
 )
 
-type Comment struct {
+type CommentSummary struct {
+	ID        int64        `json:"id"`
+	Content   string       `json:"content"`
+	PostID    int64        `json:"postID"`
+	UserID    int64        `json:"authorID"`
+	User      UserOverview `json:"author"`
+	CreatedAt string       `json:"createdAt"`
+}
+
+type CommentDetails struct {
 	ID        int64        `json:"id"`
 	Content   string       `json:"content"`
 	PostID    int64        `json:"postID"`
@@ -20,7 +29,7 @@ type CommentStore struct {
 	db *sql.DB
 }
 
-func (s *CommentStore) Create(ctx context.Context, comment *Comment) error {
+func (s *CommentStore) Create(ctx context.Context, comment *CommentDetails) error {
 	query := `
 		INSERT INTO comments (content, user_id, post_id) 
 		VALUES ($1, $2, $3) RETURNING id, created_at
@@ -46,7 +55,44 @@ func (s *CommentStore) Create(ctx context.Context, comment *Comment) error {
 	return nil
 }
 
-func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([]Comment, error) {
+func (s *CommentStore) GetByID(ctx context.Context, id int64) (*CommentSummary, error) {
+	query := `
+		SELECT
+			c.id, c.content, c.post_id, c.user_id, c.created_at, 
+			u.id, u.name, u.username
+		FROM comments c
+		INNER JOIN users u ON u.id = c.user_id
+		WHERE c.id = $1
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	comment := &CommentSummary{}
+
+	err := s.db.QueryRowContext(ctx, query, id).Scan(
+		&comment.ID,
+		&comment.Content,
+		&comment.PostID,
+		&comment.UserID,
+		&comment.CreatedAt,
+		&comment.User.ID,
+		&comment.User.Name,
+		&comment.User.Username,
+	)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return comment, nil
+}
+
+func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([]CommentDetails, error) {
 	query := `
 		SELECT 
 			c.id, c.content, c.user_id, c.post_id, c.created_at, 
@@ -68,7 +114,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	comments := []Comment{}
+	comments := []CommentDetails{}
 
 	rows, err := s.db.QueryContext(
 		ctx,
@@ -82,7 +128,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 	defer rows.Close()
 
 	for rows.Next() {
-		var comment Comment
+		var comment CommentDetails
 		comment.User = UserOverview{}
 
 		if err := rows.Scan(

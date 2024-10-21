@@ -222,8 +222,7 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 type VotePostPayload struct {
-	Value  *int  `json:"value" validate:"required,min=-1,max=1"`
-	PostID int64 `json:"postID" validate:"required"`
+	Value *int `json:"value" validate:"required,min=-1,max=1"`
 }
 
 func (app *application) votePostHandler(w http.ResponseWriter, r *http.Request) {
@@ -239,8 +238,9 @@ func (app *application) votePostHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	user := getUserFromContext(r)
+	post := getPostFromContext(r)
 
-	if err := app.store.Posts.Vote(r.Context(), *payload.Value, payload.PostID, user.ID); err != nil {
+	if err := app.store.Posts.Vote(r.Context(), *payload.Value, post.ID, user.ID); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}

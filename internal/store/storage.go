@@ -34,8 +34,9 @@ type Storage struct {
 		Vote(context.Context, int, int64, int64) error
 	}
 	Comments interface {
-		Create(context.Context, *Comment) error
-		GetByPostID(context.Context, int64, int64) ([]Comment, error)
+		Create(context.Context, *CommentDetails) error
+		GetByID(context.Context, int64) (*CommentSummary, error)
+		GetByPostID(context.Context, int64, int64) ([]CommentDetails, error)
 		Vote(context.Context, int, int64, int64) error
 	}
 	Users interface {

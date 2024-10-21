@@ -145,6 +145,8 @@ func (app *application) commentRoutes() http.Handler {
 	r.Use(app.tokenAuthMiddleware)
 
 	r.Route("/{id}", func(r chi.Router) {
+		r.Use(app.commentContextMiddleware)
+
 		r.Put("/vote", app.voteCommentHandler)
 	})
 
