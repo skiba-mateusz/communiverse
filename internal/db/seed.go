@@ -264,14 +264,14 @@ func generatePosts(num int, communities []*store.CommunityDetails, users []*stor
 	return p
 }
 
-func generateComments(num int, users []*store.UserDetails, posts []*store.PostDetails) []*store.CommentDetails {
-	c := make([]*store.CommentDetails, num)
+func generateComments(num int, users []*store.UserDetails, posts []*store.PostDetails) []*store.Comment {
+	c := make([]*store.Comment, num)
 
 	for i := 0; i < num; i++ {
 		user := users[rand.Intn(len(users))]
 		post := posts[rand.Intn(len(posts))]
 
-		c[i] = &store.CommentDetails{
+		c[i] = &store.Comment{
 			Content: comments[rand.Intn(len(comments))],
 			UserID:  user.ID,
 			PostID:  post.ID,

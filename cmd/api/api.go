@@ -132,7 +132,7 @@ func (app *application) postRoutes() http.Handler {
 		r.Put("/vote", app.votePostHandler)
 
 		r.Route("/comments", func(r chi.Router) {
-			r.Post("/", app.createCommentHandler)
+			r.Post("/", app.createPostCommentHandler)
 		})
 	})
 
@@ -147,6 +147,8 @@ func (app *application) commentRoutes() http.Handler {
 	r.Route("/{id}", func(r chi.Router) {
 		r.Use(app.commentContextMiddleware)
 
+		r.Patch("/", app.updateCommentHandler)
+		r.Delete("/", app.deleteCommentHandler)
 		r.Put("/vote", app.voteCommentHandler)
 	})
 

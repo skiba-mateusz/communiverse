@@ -18,7 +18,7 @@ type CreateCommentPayload struct {
 	Content string `json:"content" validate:"required,min=8,max=1000"`
 }
 
-func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createPostCommentHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreateCommentPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
@@ -34,7 +34,7 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 	user := getUserFromContext(r)
 	ctx := r.Context()
 
-	comment := &store.CommentDetails{
+	comment := &store.Comment{
 		Content: payload.Content,
 		PostID:  post.ID,
 		UserID:  user.ID,
@@ -57,6 +57,65 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 	if err := jsonResponse(w, http.StatusCreated, comment); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+type UpdateCommentPayload struct {
+	Content *string `json:"content" validate:"required,min=8,max=1000"`
+}
+
+func (app *application) updateCommentHandler(w http.ResponseWriter, r *http.Request) {
+	var payload UpdateCommentPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	comment := getCommentFromContext(r)
+
+	if payload.Content != nil {
+		comment.Content = *payload.Content
+	}
+
+	if err := app.store.Comments.Update(r.Context(), comment); err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := jsonResponse(w, http.StatusOK, comment); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) deleteCommentHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err = app.store.Comments.Delete(r.Context(), id); err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type VoteCommentPayload struct {
@@ -96,8 +155,9 @@ func (app *application) commentContextMiddleware(next http.Handler) http.Handler
 		}
 
 		ctx := r.Context()
+		user := getUserFromContext(r)
 
-		comment, err := app.store.Comments.GetByID(ctx, id)
+		comment, err := app.store.Comments.GetByID(ctx, id, user.ID)
 		if err != nil {
 			switch err {
 			case store.ErrNotFound:
@@ -114,7 +174,7 @@ func (app *application) commentContextMiddleware(next http.Handler) http.Handler
 	})
 }
 
-func getCommentFromContext(r *http.Request) *store.CommentSummary {
-	comment := r.Context().Value(commentCtx).(*store.CommentSummary)
+func getCommentFromContext(r *http.Request) *store.Comment {
+	comment := r.Context().Value(commentCtx).(*store.Comment)
 	return comment
 }

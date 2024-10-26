@@ -31,7 +31,7 @@ type PostDetails struct {
 	Community   CommunitySummary `json:"community"`
 	UserID      int64            `json:"authorID"`
 	User        UserSummary      `json:"author"`
-	Comments    []CommentDetails `json:"comments"`
+	Comments    []Comment        `json:"comments"`
 	NumComments int              `json:"numComments"`
 	Votes       int              `json:"votes"`
 	UserVote    int              `json:"UserVote"`

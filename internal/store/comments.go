@@ -5,23 +5,14 @@ import (
 	"database/sql"
 )
 
-type CommentSummary struct {
+type Comment struct {
 	ID        int64        `json:"id"`
 	Content   string       `json:"content"`
 	PostID    int64        `json:"postID"`
 	UserID    int64        `json:"authorID"`
 	User      UserOverview `json:"author"`
 	CreatedAt string       `json:"createdAt"`
-}
-
-type CommentDetails struct {
-	ID        int64        `json:"id"`
-	Content   string       `json:"content"`
-	PostID    int64        `json:"postID"`
-	UserID    int64        `json:"authorID"`
-	User      UserOverview `json:"author"`
-	CreatedAt string       `json:"createdAt"`
-	NumVotes  int          `json:"numVotes"`
+	Votes     int          `json:"votes"`
 	UserVote  int          `json:"userVote"`
 }
 
@@ -29,7 +20,7 @@ type CommentStore struct {
 	db *sql.DB
 }
 
-func (s *CommentStore) Create(ctx context.Context, comment *CommentDetails) error {
+func (s *CommentStore) Create(ctx context.Context, comment *Comment) error {
 	query := `
 		INSERT INTO comments (content, user_id, post_id) 
 		VALUES ($1, $2, $3) RETURNING id, created_at
@@ -55,22 +46,82 @@ func (s *CommentStore) Create(ctx context.Context, comment *CommentDetails) erro
 	return nil
 }
 
-func (s *CommentStore) GetByID(ctx context.Context, id int64) (*CommentSummary, error) {
+func (s *CommentStore) Update(ctx context.Context, comment *Comment) error {
 	query := `
-		SELECT
-			c.id, c.content, c.post_id, c.user_id, c.created_at, 
-			u.id, u.name, u.username
-		FROM comments c
-		INNER JOIN users u ON u.id = c.user_id
-		WHERE c.id = $1
+		UPDATE comments
+		SET content = $1
+		WHERE id = $2
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	comment := &CommentSummary{}
+	res, err := s.db.ExecContext(ctx, query, comment.Content, comment.ID)
+	if err != nil {
+		return err
+	}
 
-	err := s.db.QueryRowContext(ctx, query, id).Scan(
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return ErrNotFound
+	}
+
+	if rows == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *CommentStore) Delete(ctx context.Context, id int64) error {
+	query := `
+		DELETE FROM comments
+		WHERE id = $1
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	res, err := s.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return ErrNotFound
+	}
+
+	if rows == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *CommentStore) GetByID(ctx context.Context, commentID, userID int64) (*Comment, error) {
+	query := `
+		SELECT 
+			c.id, c.content, c.user_id, c.post_id, c.created_at, 
+			u.id, u.name, u.username,
+			COALESCE(SUM(cv.value), 0) AS num_votes,
+			COALESCE(uv.value, 0) AS user_vote
+		FROM comments c
+		INNER JOIN users u ON c.user_id = u.id
+		LEFT JOIN comment_votes cv ON cv.comment_id = c.id
+		LEFT JOIN comment_votes uv ON uv.comment_id = c.id AND uv.user_id = $1
+		WHERE c.id = $2
+		GROUP BY 
+			c.id, c.content, c.user_id, c.post_id, c.created_at, 
+			u.id, u.name, u.username, u.bio, u.created_at,
+			uv.value
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	comment := &Comment{}
+
+	err := s.db.QueryRowContext(ctx, query, userID, commentID).Scan(
 		&comment.ID,
 		&comment.Content,
 		&comment.PostID,
@@ -79,6 +130,8 @@ func (s *CommentStore) GetByID(ctx context.Context, id int64) (*CommentSummary, 
 		&comment.User.ID,
 		&comment.User.Name,
 		&comment.User.Username,
+		&comment.Votes,
+		&comment.UserVote,
 	)
 	if err != nil {
 		switch err {
@@ -92,7 +145,7 @@ func (s *CommentStore) GetByID(ctx context.Context, id int64) (*CommentSummary, 
 	return comment, nil
 }
 
-func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([]CommentDetails, error) {
+func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([]Comment, error) {
 	query := `
 		SELECT 
 			c.id, c.content, c.user_id, c.post_id, c.created_at, 
@@ -114,7 +167,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	comments := []CommentDetails{}
+	comments := []Comment{}
 
 	rows, err := s.db.QueryContext(
 		ctx,
@@ -128,8 +181,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 	defer rows.Close()
 
 	for rows.Next() {
-		var comment CommentDetails
-		comment.User = UserOverview{}
+		var comment Comment
 
 		if err := rows.Scan(
 			&comment.ID,
@@ -140,7 +192,7 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 			&comment.User.ID,
 			&comment.User.Name,
 			&comment.User.Username,
-			&comment.NumVotes,
+			&comment.Votes,
 			&comment.UserVote,
 		); err != nil {
 			return comments, err
