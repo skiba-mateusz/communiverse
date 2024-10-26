@@ -10,10 +10,12 @@ type Comment struct {
 	Content   string       `json:"content"`
 	PostID    int64        `json:"postID"`
 	UserID    int64        `json:"authorID"`
+	ParentID  *int64       `json:"parentID"`
 	User      UserOverview `json:"author"`
 	CreatedAt string       `json:"createdAt"`
 	Votes     int          `json:"votes"`
 	UserVote  int          `json:"userVote"`
+	Replies   []Comment    `json:"replies"`
 }
 
 type CommentStore struct {
@@ -101,7 +103,7 @@ func (s *CommentStore) Delete(ctx context.Context, id int64) error {
 func (s *CommentStore) GetByID(ctx context.Context, commentID, userID int64) (*Comment, error) {
 	query := `
 		SELECT 
-			c.id, c.content, c.user_id, c.post_id, c.created_at, 
+			c.id, c.content, c.user_id, c.post_id, c.parent_id, c.created_at, 
 			u.id, u.name, u.username,
 			COALESCE(SUM(cv.value), 0) AS num_votes,
 			COALESCE(uv.value, 0) AS user_vote
@@ -111,7 +113,7 @@ func (s *CommentStore) GetByID(ctx context.Context, commentID, userID int64) (*C
 		LEFT JOIN comment_votes uv ON uv.comment_id = c.id AND uv.user_id = $1
 		WHERE c.id = $2
 		GROUP BY 
-			c.id, c.content, c.user_id, c.post_id, c.created_at, 
+			c.id, c.content, c.user_id, c.post_id, c.parent_id, c.created_at, 
 			u.id, u.name, u.username, u.bio, u.created_at,
 			uv.value
 	`
@@ -126,6 +128,7 @@ func (s *CommentStore) GetByID(ctx context.Context, commentID, userID int64) (*C
 		&comment.Content,
 		&comment.PostID,
 		&comment.UserID,
+		&comment.ParentID,
 		&comment.CreatedAt,
 		&comment.User.ID,
 		&comment.User.Name,
@@ -148,7 +151,7 @@ func (s *CommentStore) GetByID(ctx context.Context, commentID, userID int64) (*C
 func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([]Comment, error) {
 	query := `
 		SELECT 
-			c.id, c.content, c.user_id, c.post_id, c.created_at, 
+			c.id, c.content, c.user_id, c.post_id, c.parent_id, c.created_at, 
 			u.id, u.name, u.username,
 			COALESCE(SUM(cv.value), 0) AS num_votes,
 			COALESCE(uv.value, 0) AS user_vote
@@ -182,12 +185,14 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID, userID int64) ([
 
 	for rows.Next() {
 		var comment Comment
+		comment.Replies = []Comment{}
 
 		if err := rows.Scan(
 			&comment.ID,
 			&comment.Content,
 			&comment.UserID,
 			&comment.PostID,
+			&comment.ParentID,
 			&comment.CreatedAt,
 			&comment.User.ID,
 			&comment.User.Name,

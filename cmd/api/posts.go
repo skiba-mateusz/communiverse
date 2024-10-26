@@ -65,21 +65,6 @@ func (app *application) createCommunityPostHandler(w http.ResponseWriter, r *htt
 
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
-	user := getUserFromContext(r)
-
-	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID, user.ID)
-	if err != nil {
-		switch err {
-		case store.ErrNotFound:
-			app.notFoundResponse(w, r, err)
-			return
-		default:
-			app.internalServerError(w, r, err)
-			return
-		}
-	}
-
-	post.Comments = comments
 
 	if err := jsonResponse(w, http.StatusOK, post); err != nil {
 		app.internalServerError(w, r, err)

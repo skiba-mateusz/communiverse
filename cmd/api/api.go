@@ -132,6 +132,7 @@ func (app *application) postRoutes() http.Handler {
 		r.Put("/vote", app.votePostHandler)
 
 		r.Route("/comments", func(r chi.Router) {
+			r.Get("/", app.getPostCommentsHandler)
 			r.Post("/", app.createPostCommentHandler)
 		})
 	})

@@ -59,6 +59,23 @@ func (app *application) createPostCommentHandler(w http.ResponseWriter, r *http.
 	}
 }
 
+func (app *application) getPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	user := getUserFromContext(r)
+	post := getPostFromContext(r)
+
+	comments, err := app.store.Comments.GetByPostID(r.Context(), post.ID, user.ID)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	nestedComments := buildNestedComments(comments)
+
+	if err = jsonResponse(w, http.StatusOK, nestedComments); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
 type UpdateCommentPayload struct {
 	Content *string `json:"content" validate:"required,min=8,max=1000"`
 }
@@ -177,4 +194,24 @@ func (app *application) commentContextMiddleware(next http.Handler) http.Handler
 func getCommentFromContext(r *http.Request) *store.Comment {
 	comment := r.Context().Value(commentCtx).(*store.Comment)
 	return comment
+}
+
+func buildNestedComments(comments []store.Comment) []store.Comment {
+	rootComments := []store.Comment{}
+	commentsMap := make(map[int64]*store.Comment)
+
+	for _, c := range comments {
+		commentsMap[c.ID] = &c
+	}
+
+	for _, c := range comments {
+		if c.ParentID != nil {
+			parentComment := commentsMap[*c.ParentID]
+			parentComment.Replies = append(parentComment.Replies, *commentsMap[c.ID])
+		} else {
+			rootComments = append(rootComments, *commentsMap[c.ID])
+		}
+	}
+
+	return rootComments
 }
