@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/skiba-mateusz/communiverse/internal/uploader"
 	"net/http"
 	"time"
 
@@ -18,6 +19,7 @@ type application struct {
 	store         store.Storage
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	uploader      uploader.Client
 }
 
 type config struct {
@@ -27,6 +29,7 @@ type config struct {
 	db          dbConfig
 	mail        mailConfig
 	auth        authConfig
+	upload      uploadConfig
 }
 
 type dbConfig struct {
@@ -60,6 +63,10 @@ type tokenConfig struct {
 	secret string
 	exp    time.Duration
 	iss    string
+}
+
+type uploadConfig struct {
+	bucket string
 }
 
 func (app *application) mount() http.Handler {
@@ -162,7 +169,7 @@ func (app *application) userRoutes() http.Handler {
 	r.Put("/activate/{token}", app.activateUserHandler)
 
 	r.Group(func(r chi.Router) {
-		r.Use(app.tokenAuthMiddleware)
+		//r.Use(app.tokenAuthMiddleware)
 
 		r.Get("/me", app.getCurrentUserHandler)
 		r.Get("/feed", app.getCurrentUserFeedHandler)
@@ -172,6 +179,7 @@ func (app *application) userRoutes() http.Handler {
 
 		r.Route("/{username}", func(r chi.Router) {
 			r.Get("/", app.getUserHandler)
+			r.Get("/avatar", app.getUserAvatarHandler)
 		})
 	})
 

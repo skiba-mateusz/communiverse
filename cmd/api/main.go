@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/skiba-mateusz/communiverse/internal/uploader"
 	"log"
 	"time"
 
@@ -46,6 +47,9 @@ func main() {
 				iss:    "Communiverse",
 			},
 		},
+		upload: uploadConfig{
+			bucket: env.GetString("UPLOAD_BUCKET", "communiverse-storage"),
+		},
 	}
 
 	logger := zap.Must(zap.NewProduction()).Sugar()
@@ -70,6 +74,10 @@ func main() {
 		cfg.auth.token.iss,
 		cfg.auth.token.iss,
 	)
+	uploader, err := uploader.NewS3Uploader(cfg.upload.bucket)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	app := &application{
 		config:        cfg,
@@ -77,6 +85,7 @@ func main() {
 		store:         store,
 		mailer:        mailer,
 		authenticator: authenticator,
+		uploader:      uploader,
 	}
 
 	mux := app.mount()

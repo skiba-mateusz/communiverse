@@ -1,6 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/nfnt/resize"
+	"image"
+	"image/jpeg"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -114,14 +120,19 @@ type UpdateUserPayload struct {
 }
 
 func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
-	var payload UpdateUserPayload
-
-	if err := readJSON(w, r, &payload); err != nil {
+	err := r.ParseMultipartForm(5 << 20)
+	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	if err := Validate.Struct(payload); err != nil {
+	payload := UpdateUserPayload{
+		Name:     getStringPointer(r.FormValue("name")),
+		Username: getStringPointer(r.FormValue("username")),
+		Bio:      getStringPointer(r.FormValue("bio")),
+	}
+
+	if err = Validate.Struct(payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
@@ -138,7 +149,42 @@ func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.
 		user.Bio = *payload.Bio
 	}
 
-	if err := app.store.Users.Update(r.Context(), user); err != nil {
+	ctx := r.Context()
+
+	file, _, err := r.FormFile("avatar")
+	if err != nil && err != http.ErrMissingFile {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	if err == nil {
+		defer file.Close()
+
+		img, _, err := image.Decode(file)
+		if err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		resizedImg := resize.Resize(256, 256, img, resize.Lanczos3)
+
+		buf := new(bytes.Buffer)
+		if err = jpeg.Encode(buf, resizedImg, nil); err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		id := uuid.New().String()
+		key := fmt.Sprintf("avatars/%s.jpg", id)
+
+		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key); err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		user.AvatarID = id
+	}
+
+	if err = app.store.Users.Update(ctx, user); err != nil {
 		switch err {
 		case store.ErrNotFound:
 			app.notFoundResponse(w, r, err)
@@ -148,7 +194,7 @@ func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, user); err != nil {
+	if err = jsonResponse(w, http.StatusOK, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -174,6 +220,37 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) getUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+
+	ctx := r.Context()
+
+	user, err := app.store.Users.GetByUsername(ctx, username)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.notFoundResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	key := fmt.Sprintf("avatars/%s.jpg", user.AvatarID)
+
+	file, err := app.uploader.DownloadFile(ctx, key)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.WriteHeader(http.StatusOK)
+	if _, err = w.Write(file); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
 func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 
@@ -185,4 +262,11 @@ func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Req
 func getUserFromContext(r *http.Request) *store.UserDetails {
 	user := r.Context().Value(userCtx).(*store.UserDetails)
 	return user
+}
+
+func getStringPointer(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
 }

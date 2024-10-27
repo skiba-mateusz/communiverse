@@ -27,6 +27,7 @@ type UserSummary struct {
 	Name      string `json:"name"`
 	Username  string `json:"username"`
 	Bio       string `json:"bio"`
+	AvatarID  string `json:"avatar_id"`
 	CreatedAt string `json:"createdAt"`
 }
 
@@ -36,6 +37,7 @@ type UserDetails struct {
 	Username  string   `json:"username"`
 	Bio       string   `json:"bio"`
 	Email     string   `json:"email"`
+	AvatarID  string   `json:"avatar_id"`
 	Password  Password `json:"-"`
 	IsActive  bool     `json:"IsActive"`
 	CreatedAt string   `json:"createdAt"`
@@ -100,14 +102,14 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *UserDetails) e
 }
 
 func (s *UserStore) GetByUsername(ctx context.Context, username string) (*UserSummary, error) {
-	query := `SELECT id, name, username, bio, created_at FROM users WHERE username = $1 AND is_active = true`
+	query := `SELECT id, name, username, bio, avatar_id, created_at FROM users WHERE username = $1 AND is_active = true`
 
 	user := &UserSummary{}
 	if err := s.fetchUser(
 		ctx,
 		query,
 		[]any{username},
-		[]any{&user.ID, &user.Name, &user.Username, &user.Bio, &user.CreatedAt},
+		[]any{&user.ID, &user.Name, &user.Username, &user.Bio, &user.AvatarID, &user.CreatedAt},
 	); err != nil {
 		return nil, err
 	}
@@ -116,14 +118,14 @@ func (s *UserStore) GetByUsername(ctx context.Context, username string) (*UserSu
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*UserDetails, error) {
-	query := `SELECT id, name, username, email, bio, is_active, created_at FROM users WHERE id = $1 AND is_active = true`
+	query := `SELECT id, name, username, email, bio, avatar_id, is_active, created_at FROM users WHERE id = $1 AND is_active = true`
 
 	user := &UserDetails{}
 	if err := s.fetchUser(
 		ctx,
 		query,
 		[]any{id},
-		[]any{&user.ID, &user.Name, &user.Username, &user.Email, &user.Bio, &user.IsActive, &user.CreatedAt},
+		[]any{&user.ID, &user.Name, &user.Username, &user.Email, &user.Bio, &user.AvatarID, &user.IsActive, &user.CreatedAt},
 	); err != nil {
 		return nil, err
 	}
@@ -171,12 +173,12 @@ func (s *UserStore) Delete(ctx context.Context, id int64) error {
 }
 
 func (s *UserStore) Update(ctx context.Context, user *UserDetails) error {
-	query := `UPDATE users SET name = $1, username = $2, bio = $3 WHERE id = $4`
+	query := `UPDATE users SET name = $1, username = $2, bio = $3, avatar_id = $4 WHERE id = $5`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	_, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Bio, user.ID)
+	_, err := s.db.ExecContext(ctx, query, user.Name, user.Username, user.Bio, user.AvatarID, user.ID)
 	if err != nil {
 		return err
 	}
