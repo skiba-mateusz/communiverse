@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
-	"github.com/nfnt/resize"
 	"image"
 	"image/jpeg"
 	"net/http"
@@ -56,7 +56,7 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	resizedImg := resize.Resize(400, 225, img, resize.Lanczos3)
+	resizedImg := imaging.Fill(img, 400, 225, imaging.Center, imaging.Lanczos)
 
 	buf := new(bytes.Buffer)
 
@@ -198,7 +198,7 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		resizedImg := resize.Resize(400, 225, img, resize.Lanczos3)
+		resizedImg := imaging.Fill(img, 400, 225, imaging.Center, imaging.Lanczos)
 
 		buf := new(bytes.Buffer)
 

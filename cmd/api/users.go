@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
-	"github.com/nfnt/resize"
 	"image"
 	"image/jpeg"
 	"net/http"
@@ -165,7 +165,7 @@ func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.
 			return
 		}
 
-		resizedImg := resize.Resize(256, 256, img, resize.Lanczos3)
+		resizedImg := imaging.Fill(img, 256, 256, imaging.Center, imaging.Lanczos)
 
 		buf := new(bytes.Buffer)
 		if err = jpeg.Encode(buf, resizedImg, nil); err != nil {

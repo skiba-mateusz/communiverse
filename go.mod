@@ -5,6 +5,7 @@ go 1.22.6
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.28.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.1
+	github.com/disintegration/imaging v1.6.2
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -39,10 +40,10 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	golang.org/x/image v0.21.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 )
