@@ -108,6 +108,7 @@ func (app *application) communityRoutes() http.Handler {
 		r.Use(app.communityContextMiddleware)
 
 		r.Get("/", app.getCommunityHandler)
+		r.Get("/thumbnail", app.getCommunityThumbnailHandler)
 		r.Delete("/", app.deleteCommunityHandler)
 		r.Patch("/", app.updateCommunityHandler)
 
@@ -169,7 +170,7 @@ func (app *application) userRoutes() http.Handler {
 	r.Put("/activate/{token}", app.activateUserHandler)
 
 	r.Group(func(r chi.Router) {
-		//r.Use(app.tokenAuthMiddleware)
+		r.Use(app.tokenAuthMiddleware)
 
 		r.Get("/me", app.getCurrentUserHandler)
 		r.Get("/feed", app.getCurrentUserFeedHandler)

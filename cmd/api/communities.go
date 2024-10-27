@@ -1,7 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/nfnt/resize"
+	"image"
+	"image/jpeg"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -20,10 +26,14 @@ type CreateCommunityPayload struct {
 }
 
 func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Request) {
-	var payload CreateCommunityPayload
-	if err := readJSON(w, r, &payload); err != nil {
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
+	}
+
+	payload := CreateCommunityPayload{
+		Name:        r.FormValue("name"),
+		Description: r.FormValue("description"),
 	}
 
 	if err := Validate.Struct(payload); err != nil {
@@ -32,6 +42,36 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	ctx := r.Context()
+
+	file, _, err := r.FormFile("thumbnail")
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	defer file.Close()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	resizedImg := resize.Resize(400, 225, img, resize.Lanczos3)
+
+	buf := new(bytes.Buffer)
+
+	if err = jpeg.Encode(buf, resizedImg, nil); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	id := uuid.New().String()
+	key := fmt.Sprintf("thumbnails/%s.jpg", id)
+
+	if err = app.uploader.UploadFile(ctx, buf.Bytes(), key); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
 
 	slug, err := app.store.Common.GenerateUniqueSlug(ctx, payload.Name, "communities")
 	if err != nil {
@@ -45,6 +85,7 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 		Name:        payload.Name,
 		Description: payload.Description,
 		Slug:        slug,
+		ThumbnailID: id,
 		UserID:      user.ID,
 		IsMember:    true,
 	}
@@ -63,6 +104,25 @@ func (app *application) getCommunityHandler(w http.ResponseWriter, r *http.Reque
 	community := getCommunityFromContext(r)
 
 	if err := jsonResponse(w, http.StatusOK, community); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func (app *application) getCommunityThumbnailHandler(w http.ResponseWriter, r *http.Request) {
+	community := getCommunityFromContext(r)
+
+	key := fmt.Sprintf("thumbnails/%s.jpg", community.ThumbnailID)
+
+	file, err := app.uploader.DownloadFile(r.Context(), key)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.WriteHeader(http.StatusOK)
+
+	if _, err = w.Write(file); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -91,10 +151,14 @@ type UpdateCommunityPayload struct {
 }
 
 func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Request) {
-	var payload UpdateCommunityPayload
-	if err := readJSON(w, r, &payload); err != nil {
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
+	}
+
+	payload := UpdateCommunityPayload{
+		Name:        getStringPointer(r.FormValue("name")),
+		Description: getStringPointer(r.FormValue("description")),
 	}
 
 	if err := Validate.Struct(payload); err != nil {
@@ -103,7 +167,6 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	community := getCommunityFromContext(r)
-
 	ctx := r.Context()
 
 	if payload.Name != nil {
@@ -117,9 +180,42 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 
 		community.Slug = slug
 	}
-
 	if payload.Description != nil {
 		community.Description = *payload.Description
+	}
+
+	file, _, err := r.FormFile("thumbnail")
+	if err != nil && err != http.ErrMissingFile {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	if err == nil {
+		defer file.Close()
+
+		img, _, err := image.Decode(file)
+		if err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		resizedImg := resize.Resize(400, 225, img, resize.Lanczos3)
+
+		buf := new(bytes.Buffer)
+
+		if err = jpeg.Encode(buf, resizedImg, nil); err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		id := uuid.New().String()
+		key := fmt.Sprintf("thumbnails/%s.jpg", id)
+
+		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key); err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
+
+		community.ThumbnailID = id
 	}
 
 	if err := app.store.Communities.Update(ctx, community); err != nil {
