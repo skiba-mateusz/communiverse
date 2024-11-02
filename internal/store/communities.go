@@ -6,36 +6,39 @@ import (
 )
 
 type CommunityOverview struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	ThumbnailID string `json:"thumbnailID"`
-	IsMember    bool   `json:"isMember"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Slug         string `json:"slug"`
+	ThumbnailID  string `json:"thumbnailID"`
+	ThumbnailURL string `json:"thumbnailURL"`
+	IsMember     bool   `json:"isMember"`
 }
 
 type CommunitySummary struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Slug        string `json:"slug"`
-	ThumbnailID string `json:"thumbnailID"`
-	CreatedAt   string `json:"createdAt"`
-	IsMember    bool   `json:"isMember"`
-	NumMembers  int    `json:"numMembers"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Slug         string `json:"slug"`
+	ThumbnailID  string `json:"thumbnailID"`
+	ThumbnailURL string `json:"thumbnailURL"`
+	CreatedAt    string `json:"createdAt"`
+	IsMember     bool   `json:"isMember"`
+	NumMembers   int    `json:"numMembers"`
 }
 
 type CommunityDetails struct {
-	ID          int64       `json:"id"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Slug        string      `json:"slug"`
-	ThumbnailID string      `json:"thumbnailID"`
-	UserID      int64       `json:"creatorID"`
-	User        UserSummary `json:"creator"`
-	IsMember    bool        `json:"isMember"`
-	CreatedAt   string      `json:"createdAt"`
-	NumMembers  int         `json:"numMembers"`
-	NumPosts    int         `json:"numPosts"`
+	ID           int64       `json:"id"`
+	Name         string      `json:"name"`
+	Description  string      `json:"description"`
+	Slug         string      `json:"slug"`
+	ThumbnailID  string      `json:"thumbnailID"`
+	ThumbnailURL string      `json:"thumbnailURL"`
+	UserID       int64       `json:"creatorID"`
+	User         UserSummary `json:"creator"`
+	IsMember     bool        `json:"isMember"`
+	CreatedAt    string      `json:"createdAt"`
+	NumMembers   int         `json:"numMembers"`
+	NumPosts     int         `json:"numPosts"`
 }
 
 type CommunityStore struct {
@@ -60,8 +63,8 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 	query := `
 		SELECT 
 			c.id, c.name, c.description, c.slug, thumbnail_id, c.user_id, c.created_at,
-			u.id, u.name, u.username, u.bio, u.created_at,
-			uc_user.user_id IS NOT NULL AS is_member,
+			u.id, u.name, u.username, u.bio, u.avatar_id, u.created_at,
+			uc_user.user_id IS NOT NULL AS is_member,	
 			COALESCE(COUNT(DISTINCT uc.user_id), 0) AS num_members,
 			COALESCE(COUNT(DISTINCT p.id), 0) AS num_posts
 		FROM 
@@ -104,6 +107,7 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 		&community.User.Name,
 		&community.User.Username,
 		&community.User.Bio,
+		&community.User.AvatarID,
 		&community.User.CreatedAt,
 		&community.IsMember,
 		&community.NumMembers,

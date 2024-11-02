@@ -66,7 +66,8 @@ type tokenConfig struct {
 }
 
 type uploadConfig struct {
-	bucket string
+	bucket        string
+	cloudFrontURL string
 }
 
 func (app *application) mount() http.Handler {
@@ -76,7 +77,6 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
@@ -108,7 +108,6 @@ func (app *application) communityRoutes() http.Handler {
 		r.Use(app.communityContextMiddleware)
 
 		r.Get("/", app.getCommunityHandler)
-		r.Get("/thumbnail", app.getCommunityThumbnailHandler)
 		r.Delete("/", app.deleteCommunityHandler)
 		r.Patch("/", app.updateCommunityHandler)
 
@@ -180,7 +179,6 @@ func (app *application) userRoutes() http.Handler {
 
 		r.Route("/{username}", func(r chi.Router) {
 			r.Get("/", app.getUserHandler)
-			r.Get("/avatar", app.getUserAvatarHandler)
 		})
 	})
 

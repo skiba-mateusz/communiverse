@@ -48,7 +48,8 @@ func main() {
 			},
 		},
 		upload: uploadConfig{
-			bucket: env.GetString("UPLOAD_BUCKET", "communiverse-storage"),
+			bucket:        env.GetString("UPLOAD_BUCKET", "communiverse-storage"),
+			cloudFrontURL: env.GetString("CLOUDFRONT_URL", ""),
 		},
 	}
 

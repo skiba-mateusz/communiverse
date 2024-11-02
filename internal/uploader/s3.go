@@ -26,11 +26,12 @@ func NewS3Uploader(bucket string) (*S3Uploader, error) {
 	}, nil
 }
 
-func (u *S3Uploader) UploadFile(ctx context.Context, file []byte, key string) error {
+func (u *S3Uploader) UploadFile(ctx context.Context, file []byte, key, contentType string) error {
 	_, err := u.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: &u.bucket,
-		Key:    &key,
-		Body:   bytes.NewReader(file),
+		Bucket:      &u.bucket,
+		Key:         &key,
+		Body:        bytes.NewReader(file),
+		ContentType: &contentType,
 	})
 	if err != nil {
 		return err
@@ -39,17 +40,14 @@ func (u *S3Uploader) UploadFile(ctx context.Context, file []byte, key string) er
 	return nil
 }
 
-func (u *S3Uploader) DownloadFile(ctx context.Context, key string) ([]byte, error) {
-	output, err := u.client.GetObject(ctx, &s3.GetObjectInput{
+func (u *S3Uploader) DeleteFile(ctx context.Context, key string) error {
+	_, err := u.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: &u.bucket,
 		Key:    &key,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(output.Body)
-
-	return buf.Bytes(), nil
+	return nil
 }

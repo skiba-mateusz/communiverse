@@ -74,10 +74,10 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 	query := `
 		SELECT 
 			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
-			c.id, c.name, c.description, c.slug, c.created_at,
+			c.id, c.name, c.description, c.slug, c.thumbnail_id, c.created_at,
 			uc.user_id IS NOT NULL AS is_member,   
 			COALESCE(tm.num_members, 0) AS num_members,
-			u.id, u.name, u.username, u.bio, u.created_at,
+			u.id, u.name, u.username, u.bio, u.avatar_id, u.created_at,
 			COALESCE(COUNT(cm.id), 0) AS num_comments,
 			COALESCE(tv.total_votes, 0) AS votes,
 			COALESCE(uv.user_vote, 0) AS user_vote
@@ -123,6 +123,7 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 		&post.Community.Name,
 		&post.Community.Description,
 		&post.Community.Slug,
+		&post.Community.ThumbnailID,
 		&post.Community.CreatedAt,
 		&post.Community.IsMember,
 		&post.Community.NumMembers,
@@ -130,6 +131,7 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 		&post.User.Name,
 		&post.User.Username,
 		&post.User.Bio,
+		&post.User.AvatarID,
 		&post.User.CreatedAt,
 		&post.NumComments,
 		&post.Votes,
@@ -236,9 +238,9 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 	baseQuery := `
 		SELECT 
 			p.id, p.title, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
-			c.id, c.name, c.slug,
+			c.id, c.name, c.slug, c.thumbnail_id,
 			uc.user_id IS NOT NULL AS is_member,   
-			u.id, u.name, u.username,
+			u.id, u.name, u.username, u.avatar_id,
 			COALESCE(COUNT(cm.id), 0) AS num_comments,
 			COALESCE(tv.total_votes, 0) AS votes,
 			COALESCE(uv.user_vote, 0) AS user_vote
@@ -326,10 +328,12 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			&post.Community.ID,
 			&post.Community.Name,
 			&post.Community.Slug,
+			&post.Community.ThumbnailID,
 			&post.Community.IsMember,
 			&post.User.ID,
 			&post.User.Name,
 			&post.User.Username,
+			&post.User.AvatarID,
 			&post.NumComments,
 			&post.Votes,
 			&post.UserVote,
@@ -346,64 +350,3 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 
 	return posts, nil
 }
-
-//func (s *PostStore) fetchPosts(ctx context.Context, query string, args ...interface{}) ([]Post, error) {
-//	posts := []Post{}
-//
-//	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
-//	defer cancel()
-//
-//	rows, err := s.db.QueryContext(
-//		ctx,
-//		query,
-//		args...,
-//	)
-//	if err != nil {
-//		return posts, err
-//	}
-//	defer rows.Close()
-//
-//	for rows.Next() {
-//		var post Post
-//
-//		post.User = User{}
-//		post.Community = Community{}
-//		post.Comments = []Comment{}
-//
-//		if err = rows.Scan(
-//			&post.ID,
-//			&post.Title,
-//			&post.Content,
-//			pq.Array(&post.Tags),
-//			&post.Slug,
-//			&post.UserID,
-//			&post.CommunityID,
-//			&post.CreatedAt,
-//			&post.Community.ID,
-//			&post.Community.Name,
-//			&post.Community.Description,
-//			&post.Community.Slug,
-//			&post.Community.UserID,
-//			&post.Community.CreatedAt,
-//			&post.Community.IsMember,
-//			&post.User.ID,
-//			&post.User.Name,
-//			&post.User.Username,
-//			&post.User.Bio,
-//			&post.User.CreatedAt,
-//			&post.NumComments,
-//			&post.Votes,
-//			&post.UserVote,
-//		); err != nil {
-//			return posts, err
-//		}
-//
-//		posts = append(posts, post)
-//	}
-//
-//	if err := rows.Err(); err != nil {
-//		return posts, err
-//	}
-//
-//	return posts, nil
-//}

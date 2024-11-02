@@ -53,6 +53,9 @@ type Storage struct {
 		CreatePasswordReset(context.Context, string, time.Duration, int64) error
 		ResetPassword(context.Context, string, []byte) error
 	}
+	Roles interface {
+		GetGlobalByName(context.Context, string) (*Role, error)
+	}
 	Common interface {
 		GenerateUniqueSlug(context.Context, string, string) (string, error)
 	}
@@ -70,6 +73,9 @@ func NewStorage(db *sql.DB) Storage {
 			db: db,
 		},
 		Users: &UserStore{
+			db: db,
+		},
+		Roles: &RoleStore{
 			db: db,
 		},
 		Common: &CommonStore{

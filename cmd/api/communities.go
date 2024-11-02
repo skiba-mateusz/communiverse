@@ -65,10 +65,10 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	id := uuid.New().String()
-	key := fmt.Sprintf("thumbnails/%s.jpg", id)
+	thumbnailID := uuid.New().String()
+	key := fmt.Sprintf("thumbnails/%s", thumbnailID)
 
-	if err = app.uploader.UploadFile(ctx, buf.Bytes(), key); err != nil {
+	if err = app.uploader.UploadFile(ctx, buf.Bytes(), key, "image/jpeg"); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -81,21 +81,24 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 
 	user := getUserFromContext(r)
 
+	thumbnailURL := app.generateAssetURL(thumbnailID, "thumbnails")
+
 	community := &store.CommunityDetails{
-		Name:        payload.Name,
-		Description: payload.Description,
-		Slug:        slug,
-		ThumbnailID: id,
-		UserID:      user.ID,
-		IsMember:    true,
+		Name:         payload.Name,
+		Description:  payload.Description,
+		Slug:         slug,
+		ThumbnailID:  thumbnailID,
+		ThumbnailURL: thumbnailURL,
+		UserID:       user.ID,
+		IsMember:     true,
 	}
 
-	if err := app.store.Communities.Create(ctx, community); err != nil {
+	if err = app.store.Communities.Create(ctx, community); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusCreated, community); err != nil {
+	if err = jsonResponse(w, http.StatusCreated, community); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -104,25 +107,6 @@ func (app *application) getCommunityHandler(w http.ResponseWriter, r *http.Reque
 	community := getCommunityFromContext(r)
 
 	if err := jsonResponse(w, http.StatusOK, community); err != nil {
-		app.internalServerError(w, r, err)
-	}
-}
-
-func (app *application) getCommunityThumbnailHandler(w http.ResponseWriter, r *http.Request) {
-	community := getCommunityFromContext(r)
-
-	key := fmt.Sprintf("thumbnails/%s.jpg", community.ThumbnailID)
-
-	file, err := app.uploader.DownloadFile(r.Context(), key)
-	if err != nil {
-		app.internalServerError(w, r, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.WriteHeader(http.StatusOK)
-
-	if _, err = w.Write(file); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -207,18 +191,19 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		id := uuid.New().String()
-		key := fmt.Sprintf("thumbnails/%s.jpg", id)
+		thumbnailID := uuid.New().String()
+		key := fmt.Sprintf("thumbnails/%s", thumbnailID)
 
-		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key); err != nil {
+		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key, "image/jpeg"); err != nil {
 			app.internalServerError(w, r, err)
 			return
 		}
 
-		community.ThumbnailID = id
+		community.ThumbnailID = thumbnailID
+		community.ThumbnailURL = app.generateAssetURL(thumbnailID, "thumbnails")
 	}
 
-	if err := app.store.Communities.Update(ctx, community); err != nil {
+	if err = app.store.Communities.Update(ctx, community); err != nil {
 		switch err {
 		case store.ErrNotFound:
 			app.notFoundResponse(w, r, err)
@@ -228,7 +213,7 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, community); err != nil {
+	if err = jsonResponse(w, http.StatusOK, community); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -248,7 +233,6 @@ func (app *application) joinCommunityHandler(w http.ResponseWriter, r *http.Requ
 
 func (app *application) leaveCommunityHandler(w http.ResponseWriter, r *http.Request) {
 	community := getCommunityFromContext(r)
-
 	user := getUserFromContext(r)
 
 	if user.ID == community.UserID {
@@ -293,7 +277,11 @@ func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, communities); err != nil {
+	for _, community := range communities {
+		community.ThumbnailURL = app.generateAssetURL(community.ThumbnailID, "thumbnails")
+	}
+
+	if err = jsonResponse(w, http.StatusOK, communities); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -301,9 +289,7 @@ func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Req
 func (app *application) communityContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "communitySlug")
-
 		ctx := r.Context()
-
 		user := getUserFromContext(r)
 
 		community, err := app.store.Communities.GetBySlug(ctx, slug, user.ID)
@@ -316,6 +302,9 @@ func (app *application) communityContextMiddleware(next http.Handler) http.Handl
 			}
 			return
 		}
+
+		community.ThumbnailURL = app.generateAssetURL(community.ThumbnailID, "thumbnails")
+		community.User.AvatarURL = app.generateAssetURL(community.User.AvatarID, "avatars")
 
 		ctx = context.WithValue(ctx, communityCtx, community)
 

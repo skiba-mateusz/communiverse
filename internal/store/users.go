@@ -17,9 +17,11 @@ var (
 )
 
 type UserOverview struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	AvatarID  string `json:"avatarID"`
+	AvatarURL string `json:"avatarURL"`
 }
 
 type UserSummary struct {
@@ -27,7 +29,8 @@ type UserSummary struct {
 	Name      string `json:"name"`
 	Username  string `json:"username"`
 	Bio       string `json:"bio"`
-	AvatarID  string `json:"avatar_id"`
+	AvatarID  string `json:"avatarID"`
+	AvatarURL string `json:"avatarURL"`
 	CreatedAt string `json:"createdAt"`
 }
 
@@ -37,9 +40,10 @@ type UserDetails struct {
 	Username  string   `json:"username"`
 	Bio       string   `json:"bio"`
 	Email     string   `json:"email"`
-	AvatarID  string   `json:"avatar_id"`
+	AvatarID  string   `json:"avatarID"`
+	AvatarURL string   `json:"avatarURL"`
 	Password  Password `json:"-"`
-	IsActive  bool     `json:"IsActive"`
+	IsActive  bool     `json:"isActive"`
 	CreatedAt string   `json:"createdAt"`
 }
 
@@ -118,7 +122,12 @@ func (s *UserStore) GetByUsername(ctx context.Context, username string) (*UserSu
 }
 
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*UserDetails, error) {
-	query := `SELECT id, name, username, email, bio, avatar_id, is_active, created_at FROM users WHERE id = $1 AND is_active = true`
+	query := `
+		SELECT 
+		    u.id, u.name, u.username, u.email, u.bio, u.avatar_id, u.is_active, u.created_at
+		FROM users u
+		WHERE u.id = $1 AND is_active = true
+`
 
 	user := &UserDetails{}
 	if err := s.fetchUser(

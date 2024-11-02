@@ -170,7 +170,12 @@ func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, posts); err != nil {
+	for _, post := range posts {
+		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
+		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
+	}
+
+	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -188,7 +193,7 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := Validate.Struct(query); err != nil {
+	if err = Validate.Struct(query); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
@@ -201,7 +206,12 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, posts); err != nil {
+	for _, post := range posts {
+		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
+		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
+	}
+
+	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -249,6 +259,9 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 			}
 			return
 		}
+
+		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
+		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
 
 		ctx = context.WithValue(ctx, postCtx, post)
 

@@ -38,14 +38,20 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 	}
 
 	user := getUserFromContext(r)
+	ctx := r.Context()
 
-	posts, err := app.store.Posts.GetUserFeed(r.Context(), user.ID, query)
+	posts, err := app.store.Posts.GetUserFeed(ctx, user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, posts); err != nil {
+	for _, post := range posts {
+		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
+		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
+	}
+
+	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -73,6 +79,10 @@ func (app *application) getCurrentUserCommunitiesHandler(w http.ResponseWriter, 
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
+	}
+
+	for _, community := range communities {
+		community.ThumbnailURL = app.generateAssetURL(community.ThumbnailID, "thumbnails")
 	}
 
 	if err = jsonResponse(w, http.StatusOK, communities); err != nil {
@@ -173,15 +183,16 @@ func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.
 			return
 		}
 
-		id := uuid.New().String()
-		key := fmt.Sprintf("avatars/%s.jpg", id)
+		avatarID := uuid.New().String()
+		key := fmt.Sprintf("avatars/%s", avatarID)
 
-		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key); err != nil {
+		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key, "image/jpeg"); err != nil {
 			app.internalServerError(w, r, err)
 			return
 		}
 
-		user.AvatarID = id
+		user.AvatarID = avatarID
+		user.AvatarURL = app.generateAssetURL(avatarID, "avatars")
 	}
 
 	if err = app.store.Users.Update(ctx, user); err != nil {
@@ -215,38 +226,9 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := jsonResponse(w, http.StatusOK, user); err != nil {
-		app.internalServerError(w, r, err)
-	}
-}
+	user.AvatarURL = app.generateAssetURL(user.AvatarID, "avatars")
 
-func (app *application) getUserAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	username := chi.URLParam(r, "username")
-
-	ctx := r.Context()
-
-	user, err := app.store.Users.GetByUsername(ctx, username)
-	if err != nil {
-		switch err {
-		case store.ErrNotFound:
-			app.notFoundResponse(w, r, err)
-		default:
-			app.internalServerError(w, r, err)
-		}
-		return
-	}
-
-	key := fmt.Sprintf("avatars/%s.jpg", user.AvatarID)
-
-	file, err := app.uploader.DownloadFile(ctx, key)
-	if err != nil {
-		app.internalServerError(w, r, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.WriteHeader(http.StatusOK)
-	if _, err = w.Write(file); err != nil {
+	if err = jsonResponse(w, http.StatusOK, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
@@ -254,9 +236,18 @@ func (app *application) getUserAvatarHandler(w http.ResponseWriter, r *http.Requ
 func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 
+	user.AvatarURL = app.generateAssetURL(user.AvatarID, "avatars")
+
 	if err := jsonResponse(w, http.StatusOK, user); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+func (app *application) generateAssetURL(id, assetType string) string {
+	if id == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s/%s", app.config.upload.cloudFrontURL, assetType, id)
 }
 
 func getUserFromContext(r *http.Request) *store.UserDetails {

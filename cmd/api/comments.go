@@ -34,14 +34,18 @@ func (app *application) createPostCommentHandler(w http.ResponseWriter, r *http.
 	user := getUserFromContext(r)
 	ctx := r.Context()
 
+	avatarURL := app.generateAssetURL(user.AvatarID, "avatars")
+
 	comment := &store.Comment{
 		Content: payload.Content,
 		PostID:  post.ID,
 		UserID:  user.ID,
 		User: store.UserOverview{
-			ID:       user.ID,
-			Name:     user.Name,
-			Username: user.Username,
+			ID:        user.ID,
+			Name:      user.Name,
+			Username:  user.Username,
+			AvatarID:  user.AvatarID,
+			AvatarURL: avatarURL,
 		},
 	}
 
@@ -49,10 +53,6 @@ func (app *application) createPostCommentHandler(w http.ResponseWriter, r *http.
 		app.internalServerError(w, r, err)
 		return
 	}
-
-	comment.User.Name = user.Name
-	comment.User.Username = user.Username
-	comment.User.ID = user.ID
 
 	if err := jsonResponse(w, http.StatusCreated, comment); err != nil {
 		app.internalServerError(w, r, err)
@@ -67,6 +67,10 @@ func (app *application) getPostCommentsHandler(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
+	}
+
+	for _, comment := range comments {
+		comment.User.AvatarURL = app.generateAssetURL(comment.User.AvatarID, "avatars")
 	}
 
 	nestedComments := buildNestedComments(comments)
