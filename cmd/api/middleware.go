@@ -90,58 +90,6 @@ func (app *application) basicAuthMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-func (app *application) checkPostOwnership(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		post := getPostFromContext(r)
-		user := getUserFromContext(r)
-
-		if app.isOwnerOrHasRole(w, r, ownershipContext{
-			resourceOwnerID: post.UserID,
-			userID:          user.ID,
-			communityRole:   post.Community.Role,
-			userRole:        user.Role,
-			requiredRole:    requiredRole,
-		}) {
-			next.ServeHTTP(w, r)
-		}
-	})
-}
-
-func (app *application) checkCommunityOwnership(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		community := getCommunityFromContext(r)
-		user := getUserFromContext(r)
-
-		if app.isOwnerOrHasRole(w, r, ownershipContext{
-			resourceOwnerID: community.UserID,
-			userID:          user.ID,
-			communityRole:   community.Role,
-			userRole:        user.Role,
-			requiredRole:    requiredRole,
-		}) {
-			next.ServeHTTP(w, r)
-		}
-	})
-}
-
-func (app *application) checkCommentOwnership(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		comment := getCommentFromContext(r)
-		user := getUserFromContext(r)
-		community := getCommunityFromContext(r)
-
-		if app.isOwnerOrHasRole(w, r, ownershipContext{
-			resourceOwnerID: comment.UserID,
-			userID:          user.ID,
-			communityRole:   community.Role,
-			userRole:        user.Role,
-			requiredRole:    requiredRole,
-		}) {
-			next.ServeHTTP(w, r)
-		}
-	})
-}
-
 func (app *application) authorizeWithOwnership(requiredRole, resourceType string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := getUserFromContext(r)
@@ -190,53 +138,6 @@ func (app *application) authorizeWithOwnership(requiredRole, resourceType string
 		hasGlobalRole = allowed
 
 		if isOwner || hasCommunityRole || hasGlobalRole {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		app.forbiddenResponse(w, r)
-	})
-}
-
-type ownershipContext struct {
-	resourceOwnerID int64
-	userID          int64
-	communityRole   store.Role
-	userRole        store.Role
-	requiredRole    string
-}
-
-func (app *application) isOwnerOrHasRole(w http.ResponseWriter, r *http.Request, ownership ownershipContext) bool {
-	if ownership.resourceOwnerID == ownership.userID {
-		return true
-	}
-
-	if allowed, err := app.checkRole(r.Context(), ownership.communityRole, ownership.requiredRole); err != nil {
-		app.internalServerError(w, r, err)
-		return false
-	} else if allowed {
-		return true
-	}
-
-	if allowed, err := app.checkRole(r.Context(), ownership.userRole, ownership.requiredRole); err != nil {
-		app.internalServerError(w, r, err)
-		return false
-	} else if allowed {
-		return true
-	}
-
-	app.forbiddenResponse(w, r)
-	return false
-}
-
-func (app *application) checkCommunityMembership(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		community := getCommunityFromContext(r)
-
-		if allowed, err := app.checkRole(r.Context(), community.Role, "member"); err != nil {
-			app.internalServerError(w, r, err)
-			return
-		} else if allowed {
 			next.ServeHTTP(w, r)
 			return
 		}
