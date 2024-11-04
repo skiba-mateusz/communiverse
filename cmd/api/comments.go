@@ -15,7 +15,8 @@ var (
 )
 
 type CreateCommentPayload struct {
-	Content string `json:"content" validate:"required,min=8,max=1000"`
+	Content  string `json:"content" validate:"required,min=8,max=1000"`
+	ParentID *int64 `json:"parentID" validate:"omitempty"`
 }
 
 func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +48,10 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 			AvatarID:  user.AvatarID,
 			AvatarURL: avatarURL,
 		},
+	}
+
+	if payload.ParentID != nil {
+		comment.ParentID = payload.ParentID
 	}
 
 	if err := app.store.Comments.Create(ctx, comment); err != nil {
