@@ -18,7 +18,7 @@ type CreateCommentPayload struct {
 	Content string `json:"content" validate:"required,min=8,max=1000"`
 }
 
-func (app *application) createPostCommentHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreateCommentPayload
 	if err := readJSON(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
@@ -59,7 +59,7 @@ func (app *application) createPostCommentHandler(w http.ResponseWriter, r *http.
 	}
 }
 
-func (app *application) getPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 	post := getPostFromContext(r)
 

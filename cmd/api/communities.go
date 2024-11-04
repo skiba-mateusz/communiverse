@@ -90,7 +90,6 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 		ThumbnailID:  thumbnailID,
 		ThumbnailURL: thumbnailURL,
 		UserID:       user.ID,
-		IsMember:     true,
 	}
 
 	if err = app.store.Communities.Create(ctx, community); err != nil {
@@ -220,7 +219,6 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 
 func (app *application) joinCommunityHandler(w http.ResponseWriter, r *http.Request) {
 	community := getCommunityFromContext(r)
-
 	user := getUserFromContext(r)
 
 	if err := app.store.Communities.Join(r.Context(), community.ID, user.ID); err != nil {

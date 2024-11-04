@@ -43,6 +43,7 @@ type UserDetails struct {
 	AvatarID  string   `json:"avatarID"`
 	AvatarURL string   `json:"avatarURL"`
 	Password  Password `json:"-"`
+	Role      Role     `json:"role"`
 	IsActive  bool     `json:"isActive"`
 	CreatedAt string   `json:"createdAt"`
 }
@@ -72,9 +73,9 @@ type UserStore struct {
 func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *UserDetails) error {
 	query := `
 		INSERT INTO 
-			users (name, username, email, password) 
+			users (name, username, email, password, role_id) 
 		VALUES 
-			($1, $2, $3, $4)
+			($1, $2, $3, $4, (SELECT id FROM roles WHERE name = $5))
 		RETURNING id, created_at
 	`
 
@@ -87,6 +88,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *UserDetails) e
 		user.Username,
 		user.Email,
 		user.Password.Hash,
+		user.Role.Name,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
@@ -124,8 +126,10 @@ func (s *UserStore) GetByUsername(ctx context.Context, username string) (*UserSu
 func (s *UserStore) GetByID(ctx context.Context, id int64) (*UserDetails, error) {
 	query := `
 		SELECT 
-		    u.id, u.name, u.username, u.email, u.bio, u.avatar_id, u.is_active, u.created_at
+		    u.id, u.name, u.username, u.email, u.bio, u.avatar_id, u.is_active, u.created_at,
+		    r.id, r.name, r.level
 		FROM users u
+		INNER JOIN roles r ON r.id = u.role_id
 		WHERE u.id = $1 AND is_active = true
 `
 
@@ -134,7 +138,7 @@ func (s *UserStore) GetByID(ctx context.Context, id int64) (*UserDetails, error)
 		ctx,
 		query,
 		[]any{id},
-		[]any{&user.ID, &user.Name, &user.Username, &user.Email, &user.Bio, &user.AvatarID, &user.IsActive, &user.CreatedAt},
+		[]any{&user.ID, &user.Name, &user.Username, &user.Email, &user.Bio, &user.AvatarID, &user.IsActive, &user.CreatedAt, &user.Role.ID, &user.Role.Name, &user.Role.Level},
 	); err != nil {
 		return nil, err
 	}

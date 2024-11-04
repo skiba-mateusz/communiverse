@@ -9,9 +9,8 @@ type CommunityOverview struct {
 	ID           int64  `json:"id"`
 	Name         string `json:"name"`
 	Slug         string `json:"slug"`
-	ThumbnailID  string `json:"thumbnailID"`
+	ThumbnailID  string `json:"thumbgnailID"`
 	ThumbnailURL string `json:"thumbnailURL"`
-	IsMember     bool   `json:"isMember"`
 }
 
 type CommunitySummary struct {
@@ -22,7 +21,7 @@ type CommunitySummary struct {
 	ThumbnailID  string `json:"thumbnailID"`
 	ThumbnailURL string `json:"thumbnailURL"`
 	CreatedAt    string `json:"createdAt"`
-	IsMember     bool   `json:"isMember"`
+	Role         Role   `json:"role"`
 	NumMembers   int    `json:"numMembers"`
 }
 
@@ -35,7 +34,7 @@ type CommunityDetails struct {
 	ThumbnailURL string      `json:"thumbnailURL"`
 	UserID       int64       `json:"creatorID"`
 	User         UserSummary `json:"creator"`
-	IsMember     bool        `json:"isMember"`
+	Role         Role        `json:"role"`
 	CreatedAt    string      `json:"createdAt"`
 	NumMembers   int         `json:"numMembers"`
 	NumPosts     int         `json:"numPosts"`
@@ -64,15 +63,19 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 		SELECT 
 			c.id, c.name, c.description, c.slug, thumbnail_id, c.user_id, c.created_at,
 			u.id, u.name, u.username, u.bio, u.avatar_id, u.created_at,
-			uc_user.user_id IS NOT NULL AS is_member,	
+			COALESCE(r.id, -1),
+			COALESCE(r.name, 'Visitor'), 
+			COALESCE(r.level, 0),
 			COALESCE(COUNT(DISTINCT uc.user_id), 0) AS num_members,
 			COALESCE(COUNT(DISTINCT p.id), 0) AS num_posts
 		FROM 
 			communities c
 		INNER JOIN 
 			users u ON u.id = c.user_id
+		LEFT JOIN
+			user_communities uc_user ON uc_user.community_id = c.id AND uc_user.user_id = $1
 		LEFT JOIN 
-			user_communities uc_user ON uc_user.community_id = c.id AND uc_user.user_id = $1  
+			roles r ON r.id = uc_user.role_id
 		LEFT JOIN 
 			user_communities uc ON uc.community_id = c.id
 		LEFT JOIN 
@@ -82,7 +85,7 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 		GROUP BY 
 		    c.id, c.name, c.description, c.slug, c.user_id, c.created_at, 
 		    u.id, u.name, u.username, u.bio, u.created_at,
-		    uc_user.user_id
+		    r.id, r.name, r.level
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -109,7 +112,9 @@ func (s *CommunityStore) GetBySlug(ctx context.Context, slug string, userID int6
 		&community.User.Bio,
 		&community.User.AvatarID,
 		&community.User.CreatedAt,
-		&community.IsMember,
+		&community.Role.ID,
+		&community.Role.Name,
+		&community.Role.Level,
 		&community.NumMembers,
 		&community.NumPosts,
 	)
@@ -229,12 +234,16 @@ func (s *CommunityStore) GetAll(ctx context.Context, userID int64, q PaginatedCo
 	query := `
 		SELECT 
 			c.id, c.name, c.description, c.slug, c.thumbnail_id, c.created_at,
-			uc_user.user_id IS NOT NULL AS is_member,
+			COALESCE(r.id, -1),
+			COALESCE(r.name, 'Visitor'), 
+			COALESCE(r.level, 0),
 			COALESCE(COUNT(DISTINCT uc.user_id), 0) AS num_members
 		FROM
 			communities c
 		LEFT JOIN 
-			user_communities uc_user ON uc_user.community_id = c.id AND uc_user.user_id = $1  
+			user_communities uc_user ON uc_user.community_id = c.id AND uc_user.user_id = $1
+		LEFT JOIN 
+			roles r ON r.id = uc_user.role_id
 		LEFT JOIN 
 			user_communities uc ON uc.community_id = c.id
 		LEFT JOIN 
@@ -242,7 +251,8 @@ func (s *CommunityStore) GetAll(ctx context.Context, userID int64, q PaginatedCo
 		WHERE 
 			c.name ILIKE '%' || $2 || '%' OR c.description ILIKE '%' || $2 || '%'
 		GROUP BY 
-		    c.id, c.name, c.description, c.slug, c.user_id, c.created_at, uc_user.user_id
+		    c.id, c.name, c.description, c.slug, c.user_id, c.created_at,
+		    r.id, r.name, r.level
 		ORDER BY 
 		    num_members DESC
 		LIMIT $3 OFFSET $4
@@ -276,7 +286,9 @@ func (s *CommunityStore) GetAll(ctx context.Context, userID int64, q PaginatedCo
 			&community.Slug,
 			&community.ThumbnailID,
 			&community.CreatedAt,
-			&community.IsMember,
+			&community.Role.ID,
+			&community.Role.Name,
+			&community.Role.Level,
 			&community.NumMembers,
 		); err != nil {
 			return communities, err
@@ -295,8 +307,7 @@ func (s *CommunityStore) GetAll(ctx context.Context, userID int64, q PaginatedCo
 func (s *CommunityStore) GetUserCommunities(ctx context.Context, userID int64, q PaginatedCommunitiesQuery) ([]CommunityOverview, error) {
 	query := `
 		SELECT 
-			c.id, c.name, c.slug, c.thumbnail_id,
-			uc.user_id IS NOT NULL AS is_member
+			c.id, c.name, c.slug, c.thumbnail_id
 		FROM
 			communities c
 		LEFT JOIN 
@@ -328,12 +339,11 @@ func (s *CommunityStore) GetUserCommunities(ctx context.Context, userID int64, q
 	for rows.Next() {
 		var community CommunityOverview
 
-		if err := rows.Scan(
+		if err = rows.Scan(
 			&community.ID,
 			&community.Name,
 			&community.Slug,
 			&community.ThumbnailID,
-			&community.IsMember,
 		); err != nil {
 			return communities, err
 		}
@@ -402,8 +412,8 @@ func (s *CommunityStore) join(ctx context.Context, tx *sql.Tx, communityID, user
 	}
 
 	joinQuery := `
-		INSERT INTO user_communities (user_id, community_id) 
-		VALUES ($1, $2)
+		INSERT INTO user_communities (user_id, community_id, role_id) 
+		VALUES ($1, $2, (SELECT id FROM roles WHERE name = 'member'))
 	`
 
 	_, err = tx.ExecContext(

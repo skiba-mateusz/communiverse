@@ -103,7 +103,7 @@ func (s *CommentStore) Delete(ctx context.Context, id int64) error {
 func (s *CommentStore) GetByID(ctx context.Context, commentID, userID int64) (*Comment, error) {
 	query := `
 		SELECT 
-			c.id, c.content, c.user_id, c.post_id, c.parent_id, c.created_at, 
+			c.id, c.content, c.post_id, c.user_id, c.parent_id, c.created_at, 
 			u.id, u.name, u.username,
 			COALESCE(SUM(cv.value), 0) AS num_votes,
 			COALESCE(uv.value, 0) AS user_vote

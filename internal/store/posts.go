@@ -75,7 +75,9 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 		SELECT 
 			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
 			c.id, c.name, c.description, c.slug, c.thumbnail_id, c.created_at,
-			uc.user_id IS NOT NULL AS is_member,   
+			COALESCE(r.id, -1),
+			COALESCE(r.name, 'Visitor'), 
+			COALESCE(r.level, 0),
 			COALESCE(tm.num_members, 0) AS num_members,
 			u.id, u.name, u.username, u.bio, u.avatar_id, u.created_at,
 			COALESCE(COUNT(cm.id), 0) AS num_comments,
@@ -90,7 +92,9 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 		LEFT JOIN 
 		    comments cm ON cm.post_id = p.id
 		LEFT JOIN 
-		    user_communities uc ON uc.community_id = c.id AND uc.user_id = $1 
+		    user_communities uc ON uc.community_id = c.id AND uc.user_id = $1
+		LEFT JOIN 
+		    roles r ON r.id = uc.role_id
 		LEFT JOIN 
 		    (SELECT community_id, count(user_id) AS num_members FROM user_communities GROUP BY community_id) tm ON tm.community_id = c.id
 		LEFT JOIN 
@@ -102,7 +106,8 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 		    p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
 			c.id, c.name, c.slug, c.user_id, c.created_at,
 			u.id, u.name, u.username, u.bio, u.created_at,
-			uc.user_id, tm.num_members, tv.total_votes, uv.user_vote
+			r.id, r.name, r.level,
+			tm.num_members, tv.total_votes, uv.user_vote
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -125,7 +130,9 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 		&post.Community.Slug,
 		&post.Community.ThumbnailID,
 		&post.Community.CreatedAt,
-		&post.Community.IsMember,
+		&post.Community.Role.ID,
+		&post.Community.Role.Name,
+		&post.Community.Role.Level,
 		&post.Community.NumMembers,
 		&post.User.ID,
 		&post.User.Name,
@@ -239,7 +246,6 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 		SELECT 
 			p.id, p.title, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
 			c.id, c.name, c.slug, c.thumbnail_id,
-			uc.user_id IS NOT NULL AS is_member,   
 			u.id, u.name, u.username, u.avatar_id,
 			COALESCE(COUNT(cm.id), 0) AS num_comments,
 			COALESCE(tv.total_votes, 0) AS votes,
@@ -250,8 +256,8 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			communities c ON c.id = p.community_id
 		INNER JOIN 
 			users u ON u.id = p.user_id
-		INNER JOIN
-			user_communities uc ON uc.community_id = p.community_id AND uc.user_id = $1
+		LEFT JOIN
+			user_communities uc ON uc.community_id = c.id AND uc.user_id = $1
 		LEFT JOIN
 			comments cm ON cm.post_id = p.id
 		LEFT JOIN 
@@ -270,8 +276,8 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			GROUP BY 
 		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
 		    	c.id, c.name, c.description, c.slug, c.user_id, 
-		    	u.id, u.name, u.username, u.bio, 
-		    	uc.user_id, tv.total_votes, uv.user_vote
+		    	u.id, u.name, u.username, u.bio,
+		    	tv.total_votes, uv.user_vote
 			ORDER BY p.created_at ` + q.Sort + `
 			LIMIT $4 OFFSET $5
 		`
@@ -284,8 +290,8 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			GROUP BY 
 		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
 		    	c.id, c.name, c.description, c.slug, c.user_id, 
-		    	u.id, u.name, u.username, u.bio, 
-		    	uc.user_id, tv.total_votes, uv.user_vote
+		    	u.id, u.name, u.username, u.bio,
+		    	tv.total_votes, uv.user_vote
 			ORDER BY p.created_at ` + q.Sort + `
 			LIMIT $3 OFFSET $4
 		`
@@ -294,7 +300,7 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			GROUP BY 
 		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
 		    	c.id, c.name, c.description, c.slug, c.user_id, 
-		    	u.id, u.name, u.username, u.bio, 
+		    	u.id, u.name, u.username, u.bio,
 		    	uc.user_id, tv.total_votes, uv.user_vote
 			ORDER BY p.created_at ` + q.Sort + `
 			LIMIT $3 OFFSET $4
@@ -314,8 +320,6 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 
 	for rows.Next() {
 		post := PostSummary{}
-		post.User = UserOverview{}
-		post.Community = CommunityOverview{}
 
 		if err = rows.Scan(
 			&post.ID,
@@ -329,7 +333,6 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			&post.Community.Name,
 			&post.Community.Slug,
 			&post.Community.ThumbnailID,
-			&post.Community.IsMember,
 			&post.User.ID,
 			&post.User.Name,
 			&post.User.Username,

@@ -83,13 +83,8 @@ func (app *application) mount() http.Handler {
 		r.With(app.basicAuthMiddleware()).Get("/health", app.healthHandler)
 
 		r.Mount("/communities", app.communityRoutes())
-
 		r.Mount("/posts", app.postRoutes())
-
-		r.Mount("/comments", app.commentRoutes())
-
 		r.Mount("/users", app.userRoutes())
-
 		r.Mount("/auth", app.authRoutes())
 	})
 
@@ -108,16 +103,33 @@ func (app *application) communityRoutes() http.Handler {
 		r.Use(app.communityContextMiddleware)
 
 		r.Get("/", app.getCommunityHandler)
-		r.Delete("/", app.deleteCommunityHandler)
-		r.Patch("/", app.updateCommunityHandler)
+		r.Delete("/", app.authorizeWithOwnership("admin", "community", app.deleteCommunityHandler))
+		r.Patch("/", app.authorizeWithOwnership("admin", "community", app.updateCommunityHandler))
 
 		r.Post("/join", app.joinCommunityHandler)
 		r.Delete("/leave", app.leaveCommunityHandler)
 
-		r.Route("/posts", func(r chi.Router) {
-			r.Get("/", app.getCommunityPostsHandler)
-			r.Post("/", app.createCommunityPostHandler)
-		})
+		r.Mount("/posts", app.communityPostRoutes())
+	})
+
+	return r
+}
+
+func (app *application) communityPostRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Get("/", app.getCommunityPostsHandler)
+	r.Post("/", app.authorizeWithOwnership("member", "community", app.createPostHandler))
+
+	r.Route("/{postSlug}", func(r chi.Router) {
+		r.Use(app.postContextMiddleware)
+
+		r.Get("/", app.getPostHandler)
+		r.Delete("/", app.authorizeWithOwnership("admin", "post", app.deletePostHandler))
+		r.Patch("/", app.authorizeWithOwnership("admin", "post", app.updatePostHandler))
+		r.Put("/vote", app.votePostHandler)
+
+		r.Mount("/comments", app.postCommentRoutes())
 	})
 
 	return r
@@ -130,33 +142,20 @@ func (app *application) postRoutes() http.Handler {
 
 	r.Get("/", app.getPostsHandler)
 
-	r.Route("/{postSlug}", func(r chi.Router) {
-		r.Use(app.postContextMiddleware)
-
-		r.Get("/", app.getPostHandler)
-		r.Delete("/", app.deletePostHandler)
-		r.Patch("/", app.updatePostHandler)
-		r.Put("/vote", app.votePostHandler)
-
-		r.Route("/comments", func(r chi.Router) {
-			r.Get("/", app.getPostCommentsHandler)
-			r.Post("/", app.createPostCommentHandler)
-		})
-	})
-
 	return r
 }
 
-func (app *application) commentRoutes() http.Handler {
+func (app *application) postCommentRoutes() http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(app.tokenAuthMiddleware)
+	r.Get("/", app.getCommentsHandler)
+	r.Post("/", app.authorizeWithOwnership("member", "post", app.createCommentHandler))
 
 	r.Route("/{id}", func(r chi.Router) {
 		r.Use(app.commentContextMiddleware)
 
-		r.Patch("/", app.updateCommentHandler)
-		r.Delete("/", app.deleteCommentHandler)
+		r.Patch("/", app.authorizeWithOwnership("admin", "comment", app.updateCommentHandler))
+		r.Delete("/", app.authorizeWithOwnership("admin", "comment", app.deleteCommentHandler))
 		r.Put("/vote", app.voteCommentHandler)
 	})
 

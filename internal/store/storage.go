@@ -54,7 +54,7 @@ type Storage struct {
 		ResetPassword(context.Context, string, []byte) error
 	}
 	Roles interface {
-		GetGlobalByName(context.Context, string) (*Role, error)
+		GetByName(context.Context, string) (*Role, error)
 	}
 	Common interface {
 		GenerateUniqueSlug(context.Context, string, string) (string, error)

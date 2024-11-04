@@ -1,0 +1,4 @@
+DROP TALBE IF EXISTS roles;
+
+ALTER TABLE IF EXISTS users DROP COLUMN role_id;
+ALTER TABLE IF EXISTS user_communities DROP COLUMN role_id;
