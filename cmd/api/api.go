@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/go-chi/cors"
+	"github.com/skiba-mateusz/communiverse/internal/env"
 	"github.com/skiba-mateusz/communiverse/internal/uploader"
 	"net/http"
 	"time"
@@ -77,6 +79,14 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{env.GetString("FRONTEND_URL", "http://localhost:5173")},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
