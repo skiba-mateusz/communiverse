@@ -2,6 +2,8 @@ include .env
 
 MIGRATIONS_PATH = cmd/migrate/migrations
 
+test:
+	@go test -v ./...
 migration: 
 	@migrate create -ext sql -dir $(MIGRATIONS_PATH) -seq $(filter-out $@, $(MAKECMDGOALS))
 
