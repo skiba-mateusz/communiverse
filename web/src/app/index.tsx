@@ -1,4 +1,10 @@
+import { AppProvider } from "./provider.tsx";
+import { AppRouter } from "./router.tsx";
 
 export const App = () => {
-    return <div>App</div>
-}
+  return (
+    <AppProvider>
+      <AppRouter />
+    </AppProvider>
+  );
+};
