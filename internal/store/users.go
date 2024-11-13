@@ -85,6 +85,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *UserDetails) e
 	err := tx.QueryRowContext(
 		ctx,
 		query,
+		user.Name,
 		user.Username,
 		user.Email,
 		user.Password.Hash,
