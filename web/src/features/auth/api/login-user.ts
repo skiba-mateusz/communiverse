@@ -6,14 +6,22 @@ import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
 
 export const loginUserPayloadSchema = yup.object({
-  email: yup.string().required("Email is required").email("Email is invalid"),
-  password: yup.string().required("Password is required"),
+  email: yup
+    .string()
+    .required("Email is required")
+    .email("Email is invalid")
+    .max(100, "Email cannot exceed 100 characters"),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .max(100, "Password cannot exceed 100 characters"),
 });
 
-export type loginUserPayload = yup.InferType<typeof loginUserPayloadSchema>;
+export type LoginUserPayload = yup.InferType<typeof loginUserPayloadSchema>;
 
 const loginUserApi = async (
-  payload: loginUserPayload
+  payload: LoginUserPayload
 ): Promise<{ token: string }> => {
   const res = await api.post("/v1/auth/login", payload);
   return res.data.data;
@@ -24,7 +32,7 @@ export const useLoginUser = () => {
   const { error, success } = useToasts();
 
   const { mutate: loginUser, isPending } = useMutation({
-    mutationFn: (data: loginUserPayload) => loginUserApi(data),
+    mutationFn: loginUserApi,
     onSuccess: (token) => {
       localStorage.setItem("authToken", JSON.stringify(token));
       navigate("/app");

@@ -1,5 +1,5 @@
 import {
-  loginUserPayload,
+  LoginUserPayload,
   loginUserPayloadSchema,
   useLoginUser,
 } from "@/features/auth/api/login-user";
@@ -10,7 +10,7 @@ export const LoginForm = () => {
   const { loginUser, isPending } = useLoginUser();
 
   return (
-    <Form<loginUserPayload>
+    <Form<LoginUserPayload>
       onSubmit={(data) => loginUser(data)}
       schema={loginUserPayloadSchema}
     >

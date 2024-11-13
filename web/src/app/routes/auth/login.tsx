@@ -1,5 +1,5 @@
 import { AuthLayout } from "@/components/layouts";
-import { LoginForm } from "@/features/auth/componnets/login-form";
+import { LoginForm } from "@/features/auth/components/login-form";
 
 export const LoginRoute = () => {
   return (
