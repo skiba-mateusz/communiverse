@@ -8,6 +8,7 @@ type Variant = "filled" | "outlined";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: NamedSize;
   variant?: Variant;
+  full?: boolean;
   isLoading?: boolean;
   disabled?: boolean;
   onClick?: () => void;
@@ -50,6 +51,7 @@ const StyledButton = styled.button<ButtonProps>`
 
   ${({ size }) => sizes[size || "medium"]}
   ${({ variant }) => variants[variant || "filled"]}
+  ${({ full }) => (full ? "width: 100%;" : "")}
 
   &:hover {
     opacity: 0.8;
@@ -63,6 +65,7 @@ const StyledButton = styled.button<ButtonProps>`
 export const Button = ({
   size = "medium",
   variant = "filled",
+  full = false,
   isLoading = false,
   disabled = false,
   onClick,
@@ -78,6 +81,7 @@ export const Button = ({
     <StyledButton
       size={size}
       variant={variant}
+      full={full}
       onClick={handleClick}
       disabled={disabled || isLoading}
       {...restProps}

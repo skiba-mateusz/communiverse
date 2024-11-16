@@ -26,6 +26,13 @@ const router = createBrowserRouter([
     },
   },
   {
+    path: "/auth/confirm/:confirmationToken",
+    lazy: async () => {
+      const { ActivateRoute } = await import("./routes/auth/confirm.tsx");
+      return { Component: ActivateRoute };
+    },
+  },
+  {
     path: "/app",
     element: (
       <ProtectedRoute>

@@ -11,7 +11,7 @@ import * as yup from "yup";
 
 const StyledForm = styled.form`
   display: grid;
-  gap: var(--size-200);
+  gap: var(--size-100);
 `;
 
 interface FormProps<TFormValues extends FieldValues>

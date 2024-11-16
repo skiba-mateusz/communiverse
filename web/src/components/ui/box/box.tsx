@@ -5,22 +5,22 @@ import { Size } from "@/types/styles";
 const StyledBox = styled.div<BoxProps>`
   ${({ padding, rounded }) => {
     return `
-      padding: var(--size-${padding});
+      padding: ${padding};
       border: 1px solid var(--clr-neutral-200);
-      border-radius: var(--size-${rounded}); 
+      border-radius: ${rounded}; 
     `;
   }}
 `;
 
 interface BoxProps extends React.PropsWithChildren {
-  padding?: Size;
-  rounded?: Size;
+  padding?: string;
+  rounded?: string;
   as?: keyof JSX.IntrinsicElements;
 }
 
 export const Box = ({
-  padding = 400,
-  rounded = 100,
+  padding = "1rem",
+  rounded = "0.5rem",
   as = "div",
   children,
 }: BoxProps) => {

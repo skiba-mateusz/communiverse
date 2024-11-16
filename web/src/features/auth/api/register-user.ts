@@ -28,7 +28,8 @@ export const registerUserPayloadSchema = yup.object({
     .max(100, "Password cannot exceed 100 characters"),
   passwordConfirmation: yup
     .string()
-    .oneOf([yup.ref("password"), undefined], "Passwords must match"),
+    .required("Password confirmation is required")
+    .oneOf([yup.ref("password"), ""], "Passwords must match"),
 });
 
 export type RegisterUserPayload = yup.InferType<

@@ -1,21 +1,20 @@
 import React from "react";
 import styled from "styled-components";
-import { Size } from "@/types/styles";
 
 const StyledFlow = styled.div<FlowProps>`
-  ${({ size }) => {
+  ${({ spacing }) => {
     return `
             & > * + * {
-                margin-top: var(--size-${size});
+                margin-top: ${spacing};
             }
         `;
   }}
 `;
 
 interface FlowProps extends React.PropsWithChildren {
-  size?: Size;
+  spacing?: string;
 }
 
-export const Flow = ({ size = 300, children }: FlowProps) => {
-  return <StyledFlow size={size}>{children}</StyledFlow>;
+export const Flow = ({ spacing = "2em", children }: FlowProps) => {
+  return <StyledFlow spacing={spacing}>{children}</StyledFlow>;
 };

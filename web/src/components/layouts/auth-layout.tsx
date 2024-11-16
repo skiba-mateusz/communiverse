@@ -27,7 +27,7 @@ export const AuthLayout = ({
     <>
       <Head title={title} description={description} />
       <StyledAuthLayout>
-        <Box padding={600}>
+        <Box padding="2rem">
           <Flow>
             <div>
               <Logo />
