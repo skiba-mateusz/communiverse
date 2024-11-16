@@ -14,17 +14,7 @@ const GlobalStyle = createGlobalStyle`
         --clr-neutral-900: rgb(23, 23, 23);
         --clr-neutral-950: rgb(10, 10, 10);
       
-        --clr-teal-50: rgb(240, 253, 250);
-        --clr-teal-100: rgb(204, 251, 241);
-        --clr-teal-200: rgb(153, 246, 228);
-        --clr-teal-300: rgb(94, 234, 212);
-        --clr-teal-400: rgb(45, 212, 191);
-        --clr-teal-500: rgb(20, 184, 166);
-        --clr-teal-600: rgb(13, 148, 136);
-        --clr-teal-700: rgb(15, 118, 110);
-        --clr-teal-800: rgb(17, 94, 89);
-        --clr-teal-900: rgb(19, 78, 74);
-        --clr-teal-950: rgb(4, 47, 46);
+        --clr-blue-500: rgb(59 130 246);
 
         --clr-red-400: rgb(248 113 113);
         --clr-red-600: rgb(220 38 38);

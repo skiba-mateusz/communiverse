@@ -4,6 +4,11 @@ import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 
 import { Message } from "@/components/ui/message";
 import { useState } from "react";
+import { Link } from "@/components/ui/link";
+
+const InputWrapper = styled.div`
+  position: relative;
+`;
 
 const StyledInput = styled.input`
   width: 100%;
@@ -22,19 +27,21 @@ const StyledInput = styled.input`
   }
 `;
 
-const Label = styled.label`
+const LabelWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
   font-size: var(--fs-50);
-`;
-
-const PasswordWrapper = styled.div`
-  position: relative;
 `;
 
 const ToggleBtn = styled.button`
   position: absolute;
-  inset: 0 1rem 0.25rem auto;
+  inset: 0 0 0.25rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: transparent;
   border: none;
+  aspect-ratio: 1/1;
 
   &:hover {
     opacity: 0.8;
@@ -45,12 +52,14 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   name: string;
   label: string;
   type?: string;
+  forgotPasswordLink?: boolean;
 }
 
 export const Input = ({
   name,
   label,
   type = "text",
+  forgotPasswordLink = false,
   ...restProps
 }: FormInputProps) => {
   const {
@@ -63,36 +72,32 @@ export const Input = ({
 
   return (
     <div>
-      <Label htmlFor={name}>{label}</Label>
-      {type !== "password" ? (
+      <LabelWrapper>
+        <label htmlFor={name}>{label}</label>
+        {type === "password" && forgotPasswordLink ? (
+          <Link to="/auth/forgot-password">Forgot password?</Link>
+        ) : null}
+      </LabelWrapper>
+      <InputWrapper>
         <StyledInput
           id={name}
-          type={type}
+          type={type !== "password" ? type : isVisible ? "text" : "password"}
           aria-invalid={Boolean(isError)}
           {...register(name)}
           {...restProps}
         />
-      ) : (
-        <PasswordWrapper>
-          <StyledInput
-            id={name}
-            type={isVisible ? "text" : "password"}
-            aria-invalid={Boolean(isError)}
-            {...register(name)}
-            {...restProps}
-          />
+        {type === "password" ? (
           <ToggleBtn
             type="button"
             onClick={() => setIsVisible((prev) => !prev)}
           >
             {isVisible ? <AiFillEye /> : <AiFillEyeInvisible />}
           </ToggleBtn>
-        </PasswordWrapper>
-      )}
-
-      {isError && (
+        ) : null}
+      </InputWrapper>
+      {isError ? (
         <Message variant="alert">{errors[name]?.message as string}</Message>
-      )}
+      ) : null}
     </div>
   );
 };

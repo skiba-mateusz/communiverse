@@ -15,6 +15,7 @@ const StyledBox = styled.div<BoxProps>`
 interface BoxProps extends React.PropsWithChildren {
   padding?: string;
   rounded?: string;
+  width?: string;
   as?: keyof JSX.IntrinsicElements;
 }
 
