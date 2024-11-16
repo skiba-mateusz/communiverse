@@ -1,4 +1,4 @@
-import { Form, Input } from "@/components/form";
+import { Form, Input } from "@/components/ui/form";
 import {
   useRegisterUser,
   RegisterUserPayload,

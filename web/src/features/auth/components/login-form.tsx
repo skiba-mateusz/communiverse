@@ -3,7 +3,7 @@ import {
   loginUserPayloadSchema,
   useLoginUser,
 } from "@/features/auth/api/login-user";
-import { Form, Input } from "@/components/form";
+import { Form, Input } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
 export const LoginForm = () => {

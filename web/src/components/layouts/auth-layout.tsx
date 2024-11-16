@@ -34,7 +34,7 @@ export const AuthLayout = ({
 }: AuthLayoutProps) => {
   const location = useLocation();
 
-  const isLoginRoute = location.pathname.split("/")[2] === "login";
+  const authRoute = location.pathname.split("/")[2];
 
   return (
     <>
@@ -49,15 +49,15 @@ export const AuthLayout = ({
             {children}
           </Flow>
         </Box>
-        {isLoginRoute ? (
+        {authRoute === "login" ? (
           <p>
             Do not have an account? <Link to="/auth/register">Register</Link>
           </p>
-        ) : (
+        ) : authRoute === "register" ? (
           <p>
             Already have an account? <Link to="/auth/login">Log In</Link>
           </p>
-        )}
+        ) : null}
       </StyledAuthLayout>
     </>
   );

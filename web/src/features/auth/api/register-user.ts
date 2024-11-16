@@ -38,7 +38,7 @@ export type RegisterUserPayload = yup.InferType<
 
 const registerUserApi = async (payload: RegisterUserPayload) => {
   const { passwordConfirmation, ...restPayload } = payload;
-  console.log(restPayload);
+
   await api.post(
     `${import.meta.env.VITE_API_URL}/v1/auth/register`,
     restPayload

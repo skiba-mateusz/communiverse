@@ -33,6 +33,24 @@ const router = createBrowserRouter([
     },
   },
   {
+    path: "/auth/forgot-password",
+    lazy: async () => {
+      const { ForgotPasswordRoute } = await import(
+        "./routes/auth/forgot-password"
+      );
+      return { Component: ForgotPasswordRoute };
+    },
+  },
+  {
+    path: "/auth/reset-password/:resetToken",
+    lazy: async () => {
+      const { ResetPasswordRoute } = await import(
+        "./routes/auth/reset-password"
+      );
+      return { Component: ResetPasswordRoute };
+    },
+  },
+  {
     path: "/app",
     element: (
       <ProtectedRoute>
