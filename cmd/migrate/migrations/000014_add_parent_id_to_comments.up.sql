@@ -1,2 +1,1 @@
-ALTER TABLE comments
-ADD COLUMN parent_id int REFERENCES comments (id) ON DELETE CASCADE;
+-- empty to resolve conflicts with earlier migrations

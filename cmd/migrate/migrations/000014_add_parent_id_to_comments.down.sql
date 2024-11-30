@@ -1,2 +1,1 @@
-ALTER TABLE comments
-DROP COLUMN parent_id;
+-- Empty to resolve conflicts with earlier migrations
