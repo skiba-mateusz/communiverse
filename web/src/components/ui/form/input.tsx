@@ -1,72 +1,74 @@
-import styled from "styled-components";
+import React from "react";
+import styled, { css } from "styled-components";
 import { useFormContext } from "react-hook-form";
-import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-
-import { Message } from "@/components/ui/message";
-import { useState } from "react";
-import { Link } from "@/components/ui/link";
 
 const InputWrapper = styled.div`
   position: relative;
 `;
 
 const StyledInput = styled.input`
-  width: 100%;
-  padding: var(--size-100) var(--size-200);
-  margin-bottom: var(--size-50);
-  border: 2px solid var(--clr-neutral-300);
-  border-radius: var(--size-100);
-  outline: none;
+  ${({ theme }) => css`
+    width: 100%;
+    padding: 0.5em 1em;
+    background-color: ${theme.colors.neutral[50]};
+    border: 1px solid ${theme.colors.neutral[300]};
+    border-radius: ${theme.border.radius.md};
+    outline: none;
 
-  &:focus {
-    border: 2px solid var(--clr-neutral-600);
-  }
+    &:focus {
+      border: 1px solid ${theme.colors.neutral[600]};
+    }
 
-  &[aria-invalid="true"] {
-    border: 2px solid var(--clr-red-400);
-  }
+    &[aria-invalid="true"] {
+      border: 1px solid ${theme.colors.red[400]};
+    }
+  `}
 `;
 
 const LabelWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--fs-50);
+  ${({ theme }) => css`
+    display: flex;
+    justify-content: space-between;
+    font-size: ${theme.font.size.xs};
+  `}
 `;
 
-const ToggleBtn = styled.button`
+const AndormentWrapper = styled.div`
   position: absolute;
-  inset: 0 0 0.25rem auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  border: none;
+  inset: 0 0 0 auto;
+  display: grid;
   aspect-ratio: 1/1;
-
-  &:hover {
-    opacity: 0.8;
-  }
+  overflow: hidden;
 `;
 
-interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+const ErrorMessage = styled.p`
+  ${({ theme }) => css`
+    color: ${theme.colors.red[600]};
+    font-size: ${theme.font.size.xs};
+  `}
+`;
+
+interface InputProps {
   name: string;
   label: string;
+  placeholder?: string;
   type?: string;
-  forgotPasswordLink?: boolean;
+  action?: React.ReactNode;
+  andorment?: React.ReactNode;
 }
 
 export const Input = ({
   name,
   label,
-  type = "text",
-  forgotPasswordLink = false,
-  ...restProps
-}: FormInputProps) => {
+  placeholder,
+  type,
+  action,
+  andorment,
+}: InputProps) => {
   const {
-    register,
     formState: { errors },
+    register,
   } = useFormContext();
-  const [isVisible, setIsVisible] = useState(false);
 
   const isError = errors[name];
 
@@ -74,29 +76,22 @@ export const Input = ({
     <div>
       <LabelWrapper>
         <label htmlFor={name}>{label}</label>
-        {type === "password" && forgotPasswordLink ? (
-          <Link to="/auth/forgot-password">Forgot password?</Link>
-        ) : null}
+        {action}
       </LabelWrapper>
       <InputWrapper>
         <StyledInput
           id={name}
-          type={type !== "password" ? type : isVisible ? "text" : "password"}
+          placeholder={placeholder}
+          type={type}
           aria-invalid={Boolean(isError)}
           {...register(name)}
-          {...restProps}
         />
-        {type === "password" ? (
-          <ToggleBtn
-            type="button"
-            onClick={() => setIsVisible((prev) => !prev)}
-          >
-            {isVisible ? <AiFillEye /> : <AiFillEyeInvisible />}
-          </ToggleBtn>
-        ) : null}
+        {andorment ? <AndormentWrapper>{andorment}</AndormentWrapper> : null}
       </InputWrapper>
       {isError ? (
-        <Message variant="alert">{errors[name]?.message as string}</Message>
+        <ErrorMessage role="alert">
+          {errors[name]?.message as string}
+        </ErrorMessage>
       ) : null}
     </div>
   );

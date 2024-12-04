@@ -1,52 +1,56 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { NavLink } from "react-router-dom";
 import { AiFillHome, AiOutlineGlobal, AiOutlineTeam } from "react-icons/ai";
 
 const StyledMobileNav = styled.nav`
-  position: fixed;
-  inset: auto 0 0 0;
-  height: 5rem;
-  padding-inline: var(--size-300);
-  display: none;
-  border-top: 1px solid var(--clr-neutral-200);
-  z-index: 1000;
+  ${({ theme }) => css`
+    position: fixed;
+    inset: auto 0 0 0;
+    height: 5rem;
+    padding-inline: ${theme.spacing(4)};
+    display: none;
+    border-top: 1px solid ${theme.colors.neutral[200]};
+    z-index: 1000;
 
-  @media (max-width: 50em) {
-    display: flex;
-    align-items: stretch;
-    justify-content: space-around;
-    gap: var(--size-300);
-  }
+    @media (max-width: 50em) {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-around;
+      gap: ${theme.spacing(3)};
+    }
+  `}
 `;
 
 const MobileNavLink = styled(NavLink)`
-  position: relative;
-  max-width: 8rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-weight: 500;
-  color: var(--clr-neutral-500);
+  ${({ theme }) => css`
+    position: relative;
+    max-width: 8rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: ${theme.font.weight.medium};
+    color: ${theme.colors.neutral[500]};
 
-  &.active {
-    color: var(--clr-neutral-950);
-  }
+    &.active {
+      color: ${theme.colors.neutral[900]};
+    }
 
-  &.active:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--clr-neutral-600);
-  }
+    &.active:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 100%;
+      height: 2px;
+      background: ${theme.colors.neutral[600]};
+    }
 
-  & > svg {
-    font-size: var(--fs-400);
-  }
+    & > svg {
+      font-size: ${theme.font.size.xxl};
+    }
+  `}
 `;
 
 export const MobileNav = () => {

@@ -1,21 +1,28 @@
-import styled from "styled-components";
+import React from "react";
+import styled, { css } from "styled-components";
+import { parseStyles } from "@/utils/styles";
+import { Styles } from "@/types/styles";
 
-interface  ContainerProps extends React.PropsWithChildren {
-    variant?: "full" | "narrow"
+interface ContainerProps extends React.PropsWithChildren {
+  styles?: Styles;
+  variant?: "full" | "narrow";
 }
 
-const StyledContainer = styled.div<{variant: "full" | "narrow"}>`
-    width: ${(props) => props.variant === "full" ? "calc(100% - 2rem)": "min(42rem, calc(100% - 2rem))"};
+const variants = {
+  full: css`
+    width: calc(100% - 2rem);
+  `,
+  narrow: css`
+    width: min(42rem, calc(100% - 2rem));
+  `,
+};
+
+export const Container = styled.div<ContainerProps>`
+  ${({ theme, variant, styles }) => css`
+    ${variants[variant || "full"]};
     margin-inline: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-`
+    ${parseStyles({ ...styles }, theme)}
+  `}
+`;
 
-export const Container = ({children, variant=  "full"}: ContainerProps) => {
-    return (
-        <StyledContainer variant={variant}>
-            {children}
-        </StyledContainer>
-    )
-}
+Container.displayName = "Container";

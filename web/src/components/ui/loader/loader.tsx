@@ -1,65 +1,72 @@
-import { NamedSize } from "@/types/styles";
 import styled, { css } from "styled-components";
-
-interface LoaderProps {
-  size?: NamedSize;
-}
+import { Sizes, Styles } from "@/types/styles";
+import { parseStyles } from "@/utils/styles";
 
 const sizes = {
   small: css`
-    width: var(--size-200);
-    height: var(--size-200);
+    width: 1rem;
+    height: 1rem;
   `,
   medium: css`
-    width: var(--size-500);
-    height: var(--size-500);
+    width: 1.5rem;
+    height: 1.5rem;
   `,
   large: css`
-    width: var(--size-600);
-    height: var(--size-600);
+    width: 2rem;
+    height: 2rem;
   `,
 };
 
-const StyledLoader = styled.div`
-  display: flex;
-  gap: var(--size-200);
+interface LoaderProps {
+  size?: Sizes;
+  styles?: Styles;
+}
+
+const StyledLoader = styled.div<Omit<LoaderProps, "size">>`
+  ${({ theme, styles }) => css`
+    display: flex;
+    gap: ${theme.spacing(3)};
+    ${parseStyles({ ...styles }, theme)}
+  `}
 `;
 
-const Circle = styled.div<LoaderProps>`
-  ${({ size }) => sizes[size || "medium"]}
-  border-radius: 100%;
-  background-color: var(--clr-neutral-100);
-  animation: beat 600ms ease-in-out infinite;
+const Circle = styled.div<Omit<LoaderProps, "styles">>`
+  ${({ theme, size }) => css`
+    ${sizes[size || "medium"]}
+    border-radius: 100%;
+    background-color: ${theme.colors.neutral[400]};
+    animation: beat 750ms ease-in-out infinite;
 
-  &:nth-child(1) {
-    animation-delay: 0ms;
-  }
-  &:nth-child(2) {
-    animation-delay: 200ms;
-  }
-  &:nth-child(3) {
-    animation-delay: 400ms;
-  }
+    &:nth-child(1) {
+      animation-delay: 0ms;
+    }
+    &:nth-child(2) {
+      animation-delay: 250ms;
+    }
+    &:nth-child(3) {
+      animation-delay: 500ms;
+    }
 
-  @keyframes beat {
-    0%,
-    100% {
-      transform: scale(1);
-      background-color: var(--clr-neutral-200);
+    @keyframes beat {
+      0%,
+      100% {
+        transform: scale(1);
+        background-color: ${theme.colors.neutral[400]};
+      }
+      50% {
+        transform: scale(1.25);
+        background-color: ${theme.colors.neutral[200]};
+      }
     }
-    50% {
-      transform: scale(1.25);
-      background-color: var(--clr-neutral-100);
-    }
-  }
+  `}
 `;
 
-export const Loader = ({ size = "small" }: LoaderProps) => {
+export const Loader = ({ size = "small", styles }: LoaderProps) => {
   return (
-    <StyledLoader aria-label="loading">
-      <Circle size={size} />
-      <Circle size={size} />
-      <Circle size={size} />
+    <StyledLoader styles={styles} aria-label="loading">
+      {Array.from({ length: 3 }, (_, i) => (
+        <Circle size={size} key={i} />
+      ))}
     </StyledLoader>
   );
 };

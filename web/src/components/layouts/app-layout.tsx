@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Sidebar } from "./sidebar.tsx";
 import { MobileNav } from "./mobile-nav.tsx";
 import { Header } from "./header.tsx";
@@ -9,10 +9,13 @@ const Wrapper = styled.div`
 `;
 
 const Main = styled.main`
-  flex: 1;
-  height: calc(100vh - 4rem);
-  overflow-y: auto;
-  scrollbar-width: thin;
+  ${({ theme }) => css`
+    flex: 1;
+    height: calc(100vh - 4rem);
+    padding-block: ${theme.spacing(4)};
+    overflow-y: auto;
+    scrollbar-width: thin;
+  `}
 `;
 
 interface AppLayoutProps extends React.PropsWithChildren {}

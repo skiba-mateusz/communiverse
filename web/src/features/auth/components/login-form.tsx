@@ -3,7 +3,7 @@ import {
   loginUserPayloadSchema,
   useLoginUser,
 } from "@/features/auth/api/login-user";
-import { Form, Input } from "@/components/ui/form";
+import { Form, Input, PasswordInput } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
 export const LoginForm = () => {
@@ -15,13 +15,8 @@ export const LoginForm = () => {
       schema={loginUserPayloadSchema}
     >
       <Input name="email" label="Email Address" type="email" />
-      <Input
-        name="password"
-        label="Password"
-        type="password"
-        forgotPasswordLink
-      />
-      <Button isLoading={isPending} full>
+      <PasswordInput name="password" label="Password" withForgotLink />
+      <Button size="medium" isLoading={isPending}>
         Log In
       </Button>
     </Form>

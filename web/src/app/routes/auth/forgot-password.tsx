@@ -3,7 +3,7 @@ import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-f
 
 export const ForgotPasswordRoute = () => {
   return (
-    <AuthLayout title="Forgot your password?">
+    <AuthLayout title="Forgot your password?" canGoBack>
       <ForgotPasswordForm />
     </AuthLayout>
   );

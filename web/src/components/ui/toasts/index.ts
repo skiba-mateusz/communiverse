@@ -1,2 +1,2 @@
-export * from "./toast-provider";
+export * from "./toast-context";
 export * from "./toaster";

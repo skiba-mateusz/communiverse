@@ -1,16 +1,13 @@
-import { Form, Input } from "@/components/ui/form";
+import { Form, Input, PasswordInput } from "@/components/ui/form";
 import {
   useRegisterUser,
   RegisterUserPayload,
   registerUserPayloadSchema,
 } from "../api/register-user";
 import { Button } from "@/components/ui/button";
-import { Flow } from "@/components/ui/flow";
 
 export const RegisterForm = () => {
   const { registerUser, isPending } = useRegisterUser();
-
-  console.log("dsa");
 
   return (
     <Form<RegisterUserPayload>
@@ -20,18 +17,11 @@ export const RegisterForm = () => {
       <Input name="name" label="Name" />
       <Input name="username" label="Username" />
       <Input name="email" label="Email" type="email" />
-      <Input
-        name="password"
-        label="Password"
-        type="password"
-        forgotPasswordLink
-      />
-      <Input
+      <PasswordInput name="password" label="Password" withForgotLink />
+      <PasswordInput
         name="passwordConfirmation"
         label="Password confirmation"
-        type="password"
       />
-
       <Button isLoading={isPending} full>
         Register
       </Button>

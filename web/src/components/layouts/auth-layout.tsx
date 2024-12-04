@@ -1,37 +1,37 @@
-import styled from "styled-components";
-import { Head } from "@/components/seo";
-import { Logo } from "@/components/ui/logo";
-import { Flow } from "@/components/ui/flow";
-import { Box } from "@/components/ui/box";
-import { Heading } from "../ui/heading";
+import styled, { css } from "styled-components";
 import { useLocation } from "react-router-dom";
-import { Link } from "../ui/link";
+import { useTheme } from "@/contexts/theme-context";
+import { Head } from "@/components/seo";
+import { Box } from "@/components/ui/box";
+import { Heading } from "@/components/ui/heading";
+import { Link } from "@/components/ui/link";
+import { GoBackBtn } from "@/components/ui/button";
 
-const StyledAuthLayout = styled.div`
-  padding: var(--size-400);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--size-600);
-  height: 100vh;
-
-  & > div {
-    max-width: 28rem;
-    width: 100%;
-  }
+const StyledAuthLayout = styled.main`
+  ${({ theme }) => css`
+    height: 100vh;
+    padding: ${theme.spacing(4)};
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: ${theme.spacing(8)};
+  `}
 `;
 
 interface AuthLayoutProps extends React.PropsWithChildren {
   title?: string;
   description?: string;
+  canGoBack?: boolean;
 }
 
 export const AuthLayout = ({
   title = "",
   description = "",
+  canGoBack = false,
   children,
 }: AuthLayoutProps) => {
+  const { theme } = useTheme();
   const location = useLocation();
 
   const authRoute = location.pathname.split("/")[2];
@@ -40,14 +40,20 @@ export const AuthLayout = ({
     <>
       <Head title={title} description={description} />
       <StyledAuthLayout>
-        <Box padding="2rem">
-          <Flow>
-            <div>
-              <Logo />
-              <Heading as="h1">{title}</Heading>
-            </div>
-            {children}
-          </Flow>
+        <img src={`/logo-${theme}.svg`} alt="Communiverse Logo" />
+        <Box
+          as="section"
+          styles={{
+            padding: [6, 8, 10],
+            maxWidth: "26rem",
+            width: "100%",
+          }}
+        >
+          {canGoBack ? <GoBackBtn /> : null}
+          <Heading as="h1" styles={{ textAlign: "center", marginBottom: 6 }}>
+            {title}
+          </Heading>
+          {children}
         </Box>
         {authRoute === "login" ? (
           <p>

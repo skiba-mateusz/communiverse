@@ -1,65 +1,94 @@
 import React from "react";
 import styled, { css } from "styled-components";
-import { NamedSize } from "@/types/styles.ts";
 import { Loader } from "../loader";
+import { parseStyles } from "@/utils/styles";
+import { Sizes, Styles } from "@/types/styles";
 
-type Variant = "filled" | "outlined";
+type Variants = "filled" | "outlined" | "transparent";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: NamedSize;
-  variant?: Variant;
+  size?: Sizes;
+  variant?: Variants;
   full?: boolean;
   isLoading?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  styles?: React.CSSProperties | { [key in keyof React.CSSProperties]: any };
 }
 
-const variants = {
-  filled: css`
-    background-color: var(--clr-neutral-950);
-    color: var(--clr-neutral-50);
-  `,
-  outlined: css`
-    border: 1px solid var(--clr-neutral-950);
-  `,
+const getVariant = (theme: any, variant: Variants) => {
+  switch (variant) {
+    case "filled":
+      return css`
+        background-color: ${theme.colors.neutral[950]};
+        color: ${theme.colors.neutral[50]};
+      `;
+    case "outlined":
+      return css`
+        border: 1px solid ${theme.colors.neutral[950]};
+      `;
+    case "transparent":
+      return css`
+        background: transparent;
+        border: none;
+      `;
+
+    default:
+      throw new Error(`unknown variant: ${variant}`);
+  }
 };
 
-const sizes = {
-  small: css`
-    padding: var(--size-200) var(--size-300);
-    font-size: var(--fs-50);
-  `,
-  medium: css`
-    padding: var(--size-300) var(--size-400);
-    font-size: var(--fs-100);
-  `,
-  large: css`
-    padding: var(--size-400) var(--size-500);
-    font-size: var(--fs-200);
-  `,
+export const getSize = (theme: any, size: Sizes) => {
+  switch (size) {
+    case "small":
+      return css`
+        font-size: ${theme.font.size.xs};
+      `;
+    case "medium":
+      return css`
+        font-size: ${theme.font.size.sm};
+      `;
+    case "large":
+      return css`
+        font-size: ${theme.font.size.md};
+      `;
+    default:
+      return null;
+  }
 };
 
-const StyledButton = styled.button<ButtonProps>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--size-100);
-  line-height: 1;
-  transition: 100ms;
+const StyledButton = styled.button<{
+  size: Sizes;
+  variant: Variants;
+  full: boolean;
+  styles?: Styles;
+}>`
+  ${({ theme, variant, size, full, styles }) => css`
+    padding: 0.9em 1.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: capitalize;
+    font-weight: ${theme.font.weight.semi};
+    border: none;
+    border-radius: ${theme.border.radius.md};
+    line-height: 1;
+    transition: 100ms;
 
-  ${({ size }) => sizes[size || "medium"]}
-  ${({ variant }) => variants[variant || "filled"]}
-  ${({ full }) => (full ? "width: 100%;" : "")}
+    ${getVariant(theme, variant)}
+    ${getSize(theme, size)}
+    ${full ? "width: 100%;" : ""}
 
-  &:hover {
-    opacity: 0.8;
-  }
+    &:hover {
+      opacity: 0.8;
+    }
 
-  &:active {
-    transform: scale(0.98);
-  }
+    &:active {
+      transform: scale(0.98);
+    }
+
+    ${parseStyles({ ...styles }, theme)}
+  `}
 `;
 
 export const Button = ({
@@ -69,6 +98,7 @@ export const Button = ({
   isLoading = false,
   disabled = false,
   onClick,
+  styles,
   children,
   ...restProps
 }: ButtonProps) => {
@@ -84,6 +114,7 @@ export const Button = ({
       full={full}
       onClick={handleClick}
       disabled={disabled || isLoading}
+      styles={styles}
       {...restProps}
     >
       {isLoading ? <Loader /> : children}

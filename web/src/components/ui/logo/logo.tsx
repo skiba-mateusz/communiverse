@@ -1,13 +1,22 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
+import { useTheme } from "@/contexts/theme-context";
 
 const StyledLogo = styled(Link)`
-  color: var(--clr-neutral-950);
-  font-size: var(--size-400);
-  font-weight: 700;
-  text-decoration: none;
+  ${({ theme }) => css`
+    color: ${theme.colors.neutral[950]};
+    font-size: ${theme.font.size.md};
+    font-weight: ${theme.font.weight.bold};
+    text-decoration: none;
+  `}
 `;
 
 export const Logo = () => {
-  return <StyledLogo to="/app">Communiverse</StyledLogo>;
+  const { theme } = useTheme();
+
+  return (
+    <StyledLogo to="/app">
+      <img src={`/logo-${theme}.svg`} alt="Communiverse Logo" />
+    </StyledLogo>
+  );
 };
