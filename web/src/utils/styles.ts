@@ -28,14 +28,19 @@ const resolveThemeValue = (value: any, theme: any) => {
   return resolvedValue || value;
 };
 
-const responsive = (property: string, value: any, theme: any) => {
+export const responsive = (property: string, value: any, theme: any) => {
   if (Array.isArray(value)) {
-    return breakpoints
-      .map((breakpoint, index) => {
-        const resolvedValue = resolveThemeValue(value[index], theme);
+    return value
+      .map((v, index) => {
+        const resolvedValue = resolveThemeValue(v, theme);
         const style = css({ [property]: resolvedValue });
+
+        if (index === 0) {
+          return style;
+        }
+
         return `
-                @media (min-width: ${breakpoint}) {
+                @media (min-width: ${breakpoints[index - 1]}) {
                     ${style}
                 }
             `;
@@ -48,8 +53,6 @@ const responsive = (property: string, value: any, theme: any) => {
 
 export const parseStyles = (styles: Record<string, any>, theme: any) => {
   if (!styles) return;
-
-  console.log(themeCache);
 
   return Object.entries(styles).map(([property, value]) =>
     responsive(property, value, theme)

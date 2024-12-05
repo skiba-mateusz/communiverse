@@ -1,16 +1,16 @@
 import styled, { css } from "styled-components";
-import { Styles } from "@/types/styles";
-import { parseStyles } from "@/utils/styles";
+import { ResponsiveStyle, Styles } from "@/types/styles";
+import { parseStyles, responsive } from "@/utils/styles";
 
 interface FlowStyles {
   styles?: Styles;
-  spacing?: number;
+  spacing?: ResponsiveStyle;
 }
 
 export const Flow = styled.div<FlowStyles>`
   ${({ theme, spacing, styles }) => css`
     & > * + * {
-      margin-top: ${spacing ? theme.spacing(spacing) : "1em"};
+      ${responsive("marginTop", spacing, theme)};
     }
 
     ${parseStyles({ ...styles }, theme)}

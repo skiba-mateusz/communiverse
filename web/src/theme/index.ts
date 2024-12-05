@@ -1,5 +1,8 @@
 const baseTheme = {
   spacing: (value: number) => `${(value * 4) / 16}rem`,
+  grid: {
+    columns: 12,
+  },
   font: {
     size: {
       xs: "0.9375rem",
@@ -28,8 +31,7 @@ const baseTheme = {
     },
   },
   breakpoints: {
-    sm: "30em",
-    md: "50em",
+    md: "42em",
     lg: "64em",
   },
 };
