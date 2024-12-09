@@ -5,6 +5,7 @@ import { Styles } from "@/types/styles";
 
 interface HeadingProps extends React.PropsWithChildren {
   as: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  underlined?: boolean;
   styles?: Styles;
 }
 
@@ -52,32 +53,36 @@ const getFontSize = (theme: any, as: HeadingProps["as"]) => {
 };
 
 export const Heading = styled.h1<HeadingProps>`
-  ${({ theme, as, styles }) => css`
+  ${({ theme, as, underlined = false, styles }) => css`
     position: relative;
     padding-bottom: 0.2em;
     ${getFontSize(theme, as)};
     line-height: 1.25;
 
-    &::before,
-    &::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 0.15em;
-      display: block;
-      border-radius: ${theme.border.radius.md};
-    }
+    ${underlined
+      ? css`
+          &::before,
+          &::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0.15em;
+            display: block;
+            border-radius: ${theme.border.radius.md};
+          }
 
-    &::before {
-      width: 25%;
-      background-color: ${theme.colors.neutral[600]};
-      z-index: 2;
-    }
+          &::before {
+            width: 25%;
+            background-color: ${theme.colors.neutral[600]};
+            z-index: 2;
+          }
 
-    &::after {
-      background-color: ${theme.colors.neutral[400]};
-    }
+          &::after {
+            background-color: ${theme.colors.neutral[400]};
+          }
+        `
+      : ""}
 
     ${parseStyles({ ...styles }, theme)}
   `}

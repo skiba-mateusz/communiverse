@@ -8,7 +8,7 @@ interface FlowStyles {
 }
 
 export const Flow = styled.div<FlowStyles>`
-  ${({ theme, spacing, styles }) => css`
+  ${({ theme, spacing = [4, 6, 6], styles }) => css`
     & > * + * {
       ${responsive("marginTop", spacing, theme)};
     }

@@ -3,8 +3,9 @@ import styled, { css } from "styled-components";
 import { Loader } from "../loader";
 import { parseStyles } from "@/utils/styles";
 import { Sizes, Styles } from "@/types/styles";
+import { Link } from "react-router-dom";
 
-type Variants = "filled" | "outlined" | "transparent";
+type Variants = "filled" | "soft" | "outlined" | "transparent";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Sizes;
@@ -13,15 +14,30 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   disabled?: boolean;
   onClick?: () => void;
-  styles?: React.CSSProperties | { [key in keyof React.CSSProperties]: any };
+  to?: string;
+  styles?: Styles;
 }
 
-const getVariant = (theme: any, variant: Variants) => {
+interface StylesProps {
+  size: Sizes;
+  variant: Variants;
+  full: boolean;
+  styles?: Styles;
+}
+
+export const getVariant = (theme: any, variant: Variants) => {
   switch (variant) {
     case "filled":
       return css`
         background-color: ${theme.colors.neutral[950]};
         color: ${theme.colors.neutral[50]};
+      `;
+    case "soft":
+      return css`
+        background-color: ${theme.colors.neutral[200]};
+        &:hover {
+          background-color: ${theme.colors.neutral[300]};
+        }
       `;
     case "outlined":
       return css`
@@ -29,7 +45,7 @@ const getVariant = (theme: any, variant: Variants) => {
       `;
     case "transparent":
       return css`
-        background: transparent;
+        background-color: transparent;
         border: none;
       `;
 
@@ -42,14 +58,17 @@ export const getSize = (theme: any, size: Sizes) => {
   switch (size) {
     case "small":
       return css`
+        padding: ${theme.spacing(2)} ${theme.spacing(4)};
         font-size: ${theme.font.size.xs};
       `;
     case "medium":
       return css`
+        padding: ${theme.spacing(4)} ${theme.spacing(6)};
         font-size: ${theme.font.size.sm};
       `;
     case "large":
       return css`
+        padding: ${theme.spacing(6)} ${theme.spacing(8)};
         font-size: ${theme.font.size.md};
       `;
     default:
@@ -57,17 +76,12 @@ export const getSize = (theme: any, size: Sizes) => {
   }
 };
 
-const StyledButton = styled.button<{
-  size: Sizes;
-  variant: Variants;
-  full: boolean;
-  styles?: Styles;
-}>`
+const styles = css<StylesProps>`
   ${({ theme, variant, size, full, styles }) => css`
-    padding: 0.9em 1.8em;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: ${theme.spacing(2)};
     text-transform: capitalize;
     font-weight: ${theme.font.weight.semi};
     border: none;
@@ -79,9 +93,7 @@ const StyledButton = styled.button<{
     ${getSize(theme, size)}
     ${full ? "width: 100%;" : ""}
 
-    &:hover {
-      opacity: 0.8;
-    }
+
 
     &:active {
       transform: scale(0.98);
@@ -91,6 +103,14 @@ const StyledButton = styled.button<{
   `}
 `;
 
+const StyledLink = styled(Link)<StylesProps>`
+  ${styles}
+`;
+
+const StyledButton = styled.button<StylesProps>`
+  ${styles}
+`;
+
 export const Button = ({
   size = "medium",
   variant = "filled",
@@ -98,6 +118,7 @@ export const Button = ({
   isLoading = false,
   disabled = false,
   onClick,
+  to,
   styles,
   children,
   ...restProps
@@ -107,17 +128,20 @@ export const Button = ({
     onClick?.();
   };
 
+  const Component: React.ElementType = to ? StyledLink : StyledButton;
+
   return (
-    <StyledButton
+    <Component
       size={size}
       variant={variant}
       full={full}
-      onClick={handleClick}
-      disabled={disabled || isLoading}
+      onClick={!to ? handleClick : undefined}
+      disabled={!to && (disabled || isLoading)}
+      to={to}
       styles={styles}
       {...restProps}
     >
       {isLoading ? <Loader /> : children}
-    </StyledButton>
+    </Component>
   );
 };
