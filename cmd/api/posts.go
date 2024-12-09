@@ -16,7 +16,7 @@ const (
 
 type CreatePostPayload struct {
 	Title   string   `json:"title" validate:"required,min=8,max=100"`
-	Content string   `json:"content" validate:"required,min=100,max=1000"`
+	Content string   `json:"content" validate:"required,min=100,max=2500"`
 	Tags    []string `json:"tags" validate:"required"`
 }
 
@@ -44,7 +44,7 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 
 	user := getUserFromContext(r)
 
-	post := &store.PostDetails{
+	post := &store.Post{
 		Title:       payload.Title,
 		Slug:        slug,
 		Tags:        payload.Tags,
@@ -269,7 +269,7 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getPostFromContext(r *http.Request) *store.PostDetails {
-	post := r.Context().Value(postCtx).(*store.PostDetails)
+func getPostFromContext(r *http.Request) *store.Post {
+	post := r.Context().Value(postCtx).(*store.Post)
 	return post
 }

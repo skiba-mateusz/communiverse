@@ -242,8 +242,8 @@ func generateUserCommunities(num int, communities []*store.CommunityDetails, use
 	return uc
 }
 
-func generatePosts(num int, communities []*store.CommunityDetails, users []*store.UserDetails) []*store.PostDetails {
-	p := make([]*store.PostDetails, num)
+func generatePosts(num int, communities []*store.CommunityDetails, users []*store.UserDetails) []*store.Post {
+	p := make([]*store.Post, num)
 
 	for i := 0; i < num; i++ {
 		user := users[rand.Intn(len(users))]
@@ -251,7 +251,7 @@ func generatePosts(num int, communities []*store.CommunityDetails, users []*stor
 
 		title := titles[i%len(titles)]
 
-		p[i] = &store.PostDetails{
+		p[i] = &store.Post{
 			Title:       title,
 			Content:     contents[i%len(contents)],
 			Tags:        []string{tags[i%len(tags)]},
@@ -264,7 +264,7 @@ func generatePosts(num int, communities []*store.CommunityDetails, users []*stor
 	return p
 }
 
-func generateComments(num int, users []*store.UserDetails, posts []*store.PostDetails) []*store.Comment {
+func generateComments(num int, users []*store.UserDetails, posts []*store.Post) []*store.Comment {
 	c := make([]*store.Comment, num)
 
 	for i := 0; i < num; i++ {
