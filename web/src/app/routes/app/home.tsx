@@ -1,10 +1,8 @@
 import { Container } from "@/components/ui/container";
 import { Head } from "@/components/seo";
 import { Heading } from "@/components/ui/heading";
-import { Grid, GridItem } from "@/components/ui/grid";
-import { Box } from "@/components/ui/box";
-
-import { PostsList } from "@/features/posts/components/posts-list";
+import { useCurrentUserFeed } from "@/features/users/api/get-current-user-feed";
+import { FeedView } from "@/features/posts/components/feed-view";
 
 export const HomeRoute = () => {
   return (
@@ -12,14 +10,10 @@ export const HomeRoute = () => {
       <Head title="Home" />
       <section>
         <Container variant="narrow">
-          <Heading as="h1" underlined>
+          <Heading as="h1" underlined styles={{ marginBottom: [8, 10, 12] }}>
             Home
           </Heading>
-          <Grid styles={{ paddingBlock: [8, 10, 12] }}>
-            <GridItem span={[12, 12, 12]}>
-              <PostsList />
-            </GridItem>
-          </Grid>
+          <FeedView />
         </Container>
       </section>
     </>

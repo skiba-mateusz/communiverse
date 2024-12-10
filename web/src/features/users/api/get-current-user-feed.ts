@@ -7,9 +7,9 @@ const getCurrentUserFeedApi = async (): Promise<Post[]> => {
   return res.data.data;
 };
 
-export const useGetCurrentUserFeed = () => {
+export const useCurrentUserFeed = () => {
   const {
-    data: feed,
+    data: posts,
     error,
     isLoading,
   } = useQuery({
@@ -17,5 +17,5 @@ export const useGetCurrentUserFeed = () => {
     queryKey: ["feed"],
   });
 
-  return { feed, error, isLoading };
+  return { posts, error, isLoading };
 };

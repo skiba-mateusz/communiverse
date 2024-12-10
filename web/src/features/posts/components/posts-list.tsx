@@ -1,20 +1,16 @@
-import { useGetCurrentUserFeed } from "@/features/users/api/get-current-user-feed";
-import { Loader } from "@/components/ui/loader";
 import { PostCard } from "./post-card";
 import { Flow } from "@/components/ui/flow";
+import { Message } from "@/components/ui/message";
+import { Post } from "@/types/api";
 
-export const PostsList = () => {
-  const { feed, isLoading, error } = useGetCurrentUserFeed();
-
-  console.log(feed);
-
-  if (isLoading) {
-    return <Loader />;
+export const PostsList = ({ posts }: { posts: Post[] }) => {
+  if (posts?.length === 0) {
+    <Message variant="status">No posts available</Message>;
   }
 
   return (
     <Flow as="ul">
-      {feed?.map((post) => (
+      {posts?.map((post) => (
         <li>
           <PostCard post={post} />
         </li>
