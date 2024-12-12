@@ -1,11 +1,12 @@
 package main
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/go-chi/cors"
 	"github.com/skiba-mateusz/communiverse/internal/env"
 	"github.com/skiba-mateusz/communiverse/internal/uploader"
-	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -180,11 +181,13 @@ func (app *application) userRoutes() http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(app.tokenAuthMiddleware)
 
-		r.Get("/me", app.getCurrentUserHandler)
-		r.Get("/feed", app.getCurrentUserFeedHandler)
-		r.Get("/communities", app.getCurrentUserCommunitiesHandler)
-		r.Delete("/", app.deleteCurrentUserHandler)
-		r.Patch("/", app.updateCurrentUserHandler)
+		r.Route("/me", func(r chi.Router)  {
+			r.Get("/", app.getCurrentUserHandler)
+			r.Get("/feed", app.getCurrentUserFeedHandler)
+			r.Get("/communities", app.getCurrentUserCommunitiesHandler)
+			r.Delete("/", app.deleteCurrentUserHandler)
+			r.Patch("/", app.updateCurrentUserHandler)
+		})
 
 		r.Route("/{username}", func(r chi.Router) {
 			r.Get("/", app.getUserHandler)
