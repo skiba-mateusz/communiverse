@@ -12,6 +12,7 @@ import styled, { css } from "styled-components";
 import { useCurrentUserCommunities } from "../api/get-current-user-communities";
 import { Message } from "@/components/ui/message";
 import { Loader } from "@/components/ui/loader";
+import { getAxiosErrorMessage } from "@/utils/errors";
 
 const StyledCommunitiesMenu = styled.div`
   ${({ theme }) => css`
@@ -59,7 +60,7 @@ export const CommunitiesMenu = () => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (error) {
-    return <Message variant="alert">{error.message}</Message>;
+    return <Message variant="alert">{getAxiosErrorMessage(error)}</Message>;
   }
 
   return (

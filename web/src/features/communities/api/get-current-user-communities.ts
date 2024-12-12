@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const getCurrentUserCommunitiesApi = async (): Promise<CommunityOverview[]> => {
   const res = await api.get(
-    `${import.meta.env.VITE_API_URL}/v1/users/communities`
+    `${import.meta.env.VITE_API_URL}/v1/users/me/communities`
   );
   return res.data.data;
 };

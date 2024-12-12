@@ -3,7 +3,7 @@ import { api } from "@/lib/api-client";
 import { Post } from "@/types/api";
 
 const getCurrentUserFeedApi = async (): Promise<Post[]> => {
-  const res = await api.get(`${import.meta.env.VITE_API_URL}/v1/users/feed`);
+  const res = await api.get(`${import.meta.env.VITE_API_URL}/v1/users/me/feed`);
   return res.data.data;
 };
 
