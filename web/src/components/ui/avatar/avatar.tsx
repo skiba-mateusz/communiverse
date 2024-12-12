@@ -3,24 +3,36 @@ import { parseStyles } from "@/utils/styles";
 import React from "react";
 import styled, { css } from "styled-components";
 
+const sizes = {
+  small: css`
+    height: 1.5rem;
+    width: 1.5rem;
+  `,
+  medium: css`
+    height: 3rem;
+    width: 3rem;
+  `,
+  large: css`
+    height: 6rem;
+    width: 6rem;
+  `,
+};
+
 interface AvatarProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   name?: string;
   size?: Sizes;
   styles?: Styles;
 }
 
-const Wrapper = styled.div<{ styles?: Styles }>`
+const Wrapper = styled.div<{ styles: Styles }>`
   ${({ theme, styles }) => css`
     display: flex;
     align-items: center;
     gap: ${theme.spacing(2)};
-    ${parseStyles({ ...styles }, theme)}
-    &:hover  img {
+    &:hover img {
       scale: 1.1;
     }
-    span {
-      font-weight: ${theme.font.weight.semi};
-    }
+    ${parseStyles({ ...styles }, theme)}
   `}
 `;
 
@@ -30,10 +42,11 @@ const Hidden = styled.div`
 `;
 
 const StyledAvatar = styled.img<{ size: Sizes }>`
-  height: 2rem;
-  width: 2rem;
-  object-fit: cover;
-  transition: 200ms;
+  ${({ size }) => css`
+    ${sizes[size]}
+    object-fit: cover;
+    transition: 200ms;
+  `}
 `;
 
 export const Avatar = ({

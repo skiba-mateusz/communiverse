@@ -90,6 +90,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                   src={thumbnailURL}
                   alt={`${community?.name || "Unknown"}'s thumbnail`}
                   name={community?.name}
+                  styles={{ fontWeight: "font.weight.bold" }}
                 />
               </RouterLink>
               <RouterLink
@@ -100,6 +101,7 @@ export const PostCard = ({ post }: PostCardProps) => {
                   src={avatarURL}
                   alt={`${author?.username || "Unknown"}'s avatar`}
                   name={author?.username}
+                  styles={{ fontWeight: "font.weight.bold" }}
                 />
               </RouterLink>
             </Origin>

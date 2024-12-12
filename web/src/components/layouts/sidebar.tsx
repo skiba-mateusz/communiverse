@@ -1,6 +1,7 @@
 import styled, { css } from "styled-components";
-import { NavLink } from "react-router-dom";
-import { AiFillHome, AiOutlineGlobal } from "react-icons/ai";
+import { AiFillHome, AiOutlineGlobal, AiOutlineTeam } from "react-icons/ai";
+import { CommunitiesMenu } from "@/features/communities/components/communities-menu";
+import { NavLink } from "../ui/link";
 
 const StyledSidebar = styled.aside`
   ${({ theme }) => css`
@@ -8,11 +9,11 @@ const StyledSidebar = styled.aside`
     height: calc(100vh - 4rem);
     border-right: 1px solid ${theme.colors.neutral[300]};
 
-    @media (max-width: 70em) {
+    @media (max-width: ${theme.breakpoints.lg}) {
       width: 4rem;
     }
 
-    @media (max-width: 50em) {
+    @media (max-width: ${theme.breakpoints.md}) {
       display: none;
     }
   `}
@@ -23,31 +24,10 @@ const Nav = styled.nav`
     padding-block: ${theme.spacing(6)};
     display: flex;
     flex-direction: column;
-    gap: ${theme.spacing(4)};
-  `}
-`;
 
-const StyledNavLink = styled(NavLink)`
-  ${({ theme }) => css`
-    padding: ${theme.spacing(2)} ${theme.spacing(4)};
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(2)};
-    text-decoration: none;
-    font-weight: ${theme.font.weight.medium};
-
-    &.active,
-    &:hover {
-      background: ${theme.colors.neutral[200]};
-    }
-
-    @media (max-width: 70em) {
-      & > span {
+    @media (min-width: ${theme.breakpoints.lg}) {
+      & li:nth-of-type(3) {
         display: none;
-      }
-
-      & > svg {
-        margin-inline: auto;
       }
     }
   `}
@@ -59,16 +39,25 @@ export const Sidebar = () => {
       <Nav>
         <ul>
           <li>
-            <StyledNavLink to="/app" end>
+            <NavLink to="/app" end>
               <AiFillHome />
               <span>Home</span>
-            </StyledNavLink>
+            </NavLink>
           </li>
           <li>
-            <StyledNavLink to="/app/posts" end>
+            <NavLink to="/app/posts" end>
               <AiOutlineGlobal />
               <span>Explore</span>
-            </StyledNavLink>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/app/communities" end>
+              <AiOutlineTeam />
+              <span>Communities</span>
+            </NavLink>
+          </li>
+          <li>
+            <CommunitiesMenu />
           </li>
         </ul>
       </Nav>

@@ -24,7 +24,9 @@ interface LoaderProps {
 
 const StyledLoader = styled.div<Omit<LoaderProps, "size">>`
   ${({ theme, styles }) => css`
+    padding: ${theme.spacing(4)};
     display: flex;
+    justify-self: center;
     gap: ${theme.spacing(3)};
     ${parseStyles({ ...styles }, theme)}
   `}
@@ -32,7 +34,7 @@ const StyledLoader = styled.div<Omit<LoaderProps, "size">>`
 
 const Circle = styled.div<Omit<LoaderProps, "styles">>`
   ${({ theme, size }) => css`
-    ${sizes[size || "medium"]}
+    ${sizes[size || "small"]}
     border-radius: 100%;
     background-color: ${theme.colors.neutral[400]};
     animation: beat 750ms ease-in-out infinite;
