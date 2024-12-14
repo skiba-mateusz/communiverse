@@ -33,6 +33,8 @@ export interface CommunityOverview {
   thumbnailURL: string;
 }
 
+export type VoteValue = 1 | 0 | -1;
+
 export interface Post {
   id: number;
   title: string;
@@ -45,6 +47,6 @@ export interface Post {
   author: UserOverview;
   numComments: number;
   votes: number;
-  userVote: number;
+  userVote: VoteValue;
   createdAt: Date;
 }

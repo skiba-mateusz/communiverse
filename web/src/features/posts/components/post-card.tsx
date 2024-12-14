@@ -12,6 +12,8 @@ import {
   CardContent,
   CardHeader,
 } from "@/components/ui/card";
+import { Votes } from "@/components/ui/votes";
+import { useVotePost } from "../api/vote-post";
 
 interface PostCardProps {
   post: Post;
@@ -65,42 +67,58 @@ const PostTags = ({ tags }: { tags: string[] }) => {
 };
 
 export const PostCard = ({ post }: PostCardProps) => {
+  const { vote } = useVotePost();
+
   if (!post) {
     return null;
   }
 
-  const { community, author } = post;
-  const thumbnailURL = community?.thumbnailURL || "/community.svg";
-  const avatarURL = author?.avatarURL || "/avatar.svg";
+  const {
+    title,
+    content,
+    slug: postSlug,
+    tags,
+    votes,
+    userVote,
+    numComments,
+    community,
+    author,
+  } = post;
+  const {
+    name,
+    slug: communitySlug,
+    thumbnailURL = "/thumbnail.svg",
+  } = community;
+  const { username, avatarURL } = author;
 
-  const truncatedContent = post?.content.split(" ").slice(0, 35).join(" ");
+  const truncatedContent = content.split(" ").slice(0, 35).join(" ");
 
   return (
-    <RouterLink to={`/communities/${community.slug}/posts/${post?.slug}`}>
-      <Card>
+    <Card>
+      <RouterLink to={`/communities/${communitySlug}/posts/${postSlug}`}>
         <CardHeader
-          title={post?.title || "Untitled Post"}
+          title={title}
           avatar={
             <Origin>
               <RouterLink
-                to={`/communities/${community?.slug}`}
-                aria-label={`Go to ${community?.name || "unknown"} community`}
+                to={`/communities/${communitySlug}`}
+                aria-label={`Go to ${name} community`}
               >
                 <Avatar
-                  src={thumbnailURL}
-                  alt={`${community?.name || "Unknown"}'s thumbnail`}
-                  name={community?.name}
+                  src={thumbnailURL || "/community.svg"}
+                  alt={`${name}'s thumbnail`}
+                  name={name}
                   styles={{ fontWeight: "font.weight.bold" }}
                 />
               </RouterLink>
               <RouterLink
-                to={`/users/${author?.username}`}
-                aria-label={`Go to ${author?.username || "unknown"}'s profile`}
+                to={`/users/${username}`}
+                aria-label={`Go to ${username}'s profile`}
               >
                 <Avatar
-                  src={avatarURL}
-                  alt={`${author?.username || "Unknown"}'s avatar`}
-                  name={author?.username}
+                  src={avatarURL || "/avatar.svg"}
+                  alt={`${username}'s avatar`}
+                  name={username}
                   styles={{ fontWeight: "font.weight.bold" }}
                 />
               </RouterLink>
@@ -109,24 +127,42 @@ export const PostCard = ({ post }: PostCardProps) => {
         />
         <CardContent>
           <Flow spacing={2}>
-            <PostTags tags={post?.tags} />
+            <PostTags tags={tags} />
             <ContentOverlay>
               <Markdown>{truncatedContent + "..."}</Markdown>
             </ContentOverlay>
           </Flow>
         </CardContent>
-        <CardActions>
-          <Button
-            size="small"
-            variant="soft"
-            to={`/communities/${community?.slug}/posts/${post?.slug}#comments`}
-            aria-label="View comments"
-          >
-            <BiCommentDetail />
-            <span>{post?.numComments || 0}</span>
-          </Button>
-        </CardActions>
-      </Card>
-    </RouterLink>
+      </RouterLink>
+      <CardActions>
+        <Votes
+          initialVotes={votes}
+          initialUserVote={userVote}
+          onUpvote={(value) =>
+            vote({
+              communitySlug,
+              postSlug,
+              value,
+            })
+          }
+          onDownvote={(value) =>
+            vote({
+              communitySlug,
+              postSlug,
+              value,
+            })
+          }
+        />
+        <Button
+          size="small"
+          variant="soft"
+          to={`/communities/${communitySlug}/posts/${postSlug}#comments`}
+          aria-label="View comments"
+        >
+          <BiCommentDetail />
+          <span>{numComments}</span>
+        </Button>
+      </CardActions>
+    </Card>
   );
 };
