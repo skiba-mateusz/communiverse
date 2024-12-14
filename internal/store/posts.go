@@ -7,27 +7,37 @@ import (
 	"github.com/lib/pq"
 )
 
-type Post struct {
+type BasePost struct {
 	ID          int64            `json:"id"`
 	Title       string           `json:"title"`
 	Content     string           `json:"content"`
 	Slug        string           `json:"slug"`
 	Tags        []string         `json:"tags"`
 	CommunityID int64            `json:"communityID"`
-	Community   CommunitySummary `json:"community"`
 	UserID      int64            `json:"authorID"`
-	User        UserSummary      `json:"author"`
 	NumComments int              `json:"numComments"`
 	Votes       int              `json:"votes"`
 	UserVote    int              `json:"userVote"`
 	CreatedAt   string           `json:"createdAt"`
 }
 
+type PostSummary struct {
+	BasePost
+	Community   CommunityOverview `json:"community"`
+	User        UserOverview      `json:"author"`
+}
+
+type PostDetails struct {
+	BasePost
+	Community   CommunitySummary `json:"community"`
+	User        UserSummary      `json:"author"`
+}
+
 type PostStore struct {
 	db *sql.DB
 }
 
-func (s *PostStore) Create(ctx context.Context, post *Post) error {
+func (s *PostStore) Create(ctx context.Context, post *PostDetails) error {
 	query := `
 		INSERT INTO posts (title, content, slug, tags, community_id, user_id)
 		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at
@@ -56,7 +66,7 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*Post, error) {
+func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*PostDetails, error) {
 	query := `
 		SELECT 
 			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
@@ -99,7 +109,7 @@ func (s *PostStore) GetBySlug(ctx context.Context, slug string, userID int64) (*
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	post := Post{}
+	post := PostDetails{}
 
 	err := s.db.QueryRowContext(ctx, query, userID, slug).Scan(
 		&post.ID,
@@ -164,7 +174,7 @@ func (s *PostStore) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *PostStore) Update(ctx context.Context, post *Post) error {
+func (s *PostStore) Update(ctx context.Context, post *PostDetails) error {
 	query := `
 		UPDATE posts SET title = $1, content = $2, tags = $3, slug = $4 WHERE id = $5
 	`
@@ -196,15 +206,15 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	return nil
 }
 
-func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID, userID int64, q PaginatedPostsQuery) ([]Post, error) {
+func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
 	return s.fetchPosts(ctx, userID, &communityID, q, false)
 }
 
-func (s *PostStore) GetAll(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]Post, error) {
+func (s *PostStore) GetAll(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
 	return s.fetchPosts(ctx, userID, nil, q, false)
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]Post, error) {
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
 	return s.fetchPosts(ctx, userID, nil, q, true)
 }
 
@@ -227,7 +237,7 @@ func (s *PostStore) Vote(ctx context.Context, value int, postID, userID int64) e
 	return nil
 }
 
-func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *int64, q PaginatedPostsQuery, isFeed bool) ([]Post, error) {
+func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *int64, q PaginatedPostsQuery, isFeed bool) ([]PostSummary, error) {
 	baseQuery := `
 		SELECT 
 			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
@@ -297,7 +307,7 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
-	posts := []Post{}
+	posts := []PostSummary{}
 
 	rows, err := s.db.QueryContext(ctx, baseQuery, args...)
 	if err != nil {
@@ -305,7 +315,7 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 	}
 
 	for rows.Next() {
-		post := Post{}
+		post := PostSummary{}
 
 		if err = rows.Scan(
 			&post.ID,

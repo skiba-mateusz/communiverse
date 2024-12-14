@@ -4,9 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -34,8 +35,10 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	user := &store.UserDetails{
-		Name:     payload.Name,
-		Username: payload.Username,
+		BaseUser: store.BaseUser{
+			Name:     payload.Name,
+			Username: payload.Username,
+		},
 		Email:    payload.Email,
 		Role: store.Role{
 			Name: "user",

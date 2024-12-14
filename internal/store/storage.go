@@ -24,13 +24,13 @@ type Storage struct {
 		GetUserCommunities(context.Context, int64, PaginatedCommunitiesQuery) ([]CommunityOverview, error)
 	}
 	Posts interface {
-		Create(context.Context, *Post) error
-		GetBySlug(context.Context, string, int64) (*Post, error)
+		Create(context.Context, *PostDetails) error
+		GetBySlug(context.Context, string, int64) (*PostDetails, error)
 		Delete(context.Context, int64) error
-		Update(context.Context, *Post) error
-		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]Post, error)
-		GetAll(context.Context, int64, PaginatedPostsQuery) ([]Post, error)
-		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]Post, error)
+		Update(context.Context, *PostDetails) error
+		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]PostSummary, error)
+		GetAll(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, error)
+		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, error)
 		Vote(context.Context, int, int64, int64) error
 	}
 	Comments interface {

@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/disintegration/imaging"
-	"github.com/google/uuid"
 	"image"
 	"image/jpeg"
 	"net/http"
+
+	"github.com/disintegration/imaging"
+	"github.com/google/uuid"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/skiba-mateusz/communiverse/internal/store"
@@ -84,11 +85,13 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 	thumbnailURL := app.generateAssetURL(thumbnailID, "thumbnails")
 
 	community := &store.CommunityDetails{
-		Name:         payload.Name,
+		BaseCommunity: store.BaseCommunity{
+			Name:         payload.Name,
+			Slug:         slug,
+			ThumbnailID:  thumbnailID,
+			ThumbnailURL: thumbnailURL,
+		},
 		Description:  payload.Description,
-		Slug:         slug,
-		ThumbnailID:  thumbnailID,
-		ThumbnailURL: thumbnailURL,
 		UserID:       user.ID,
 	}
 

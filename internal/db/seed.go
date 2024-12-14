@@ -203,11 +203,17 @@ func generateUsers(num int) []*store.UserDetails {
 
 	for i := 0; i < num; i++ {
 		users[i] = &store.UserDetails{
-			Name:     names[i%len(names)],
-			Username: fmt.Sprintf("%s%d", usernames[i%len(usernames)], i),
+			BaseUser: store.BaseUser{
+				Name:     names[i%len(names)],
+				Username: fmt.Sprintf("%s%d", usernames[i%len(usernames)], i),
+			},
 			Email:    fmt.Sprintf("%s%d@example.com", usernames[i%len(usernames)], i),
-			Password: store.Password{Hash: []byte("123456")},
+			Role: store.Role{
+				Name: "user",
+			},
 		}
+		users[i].Password.Set("123456")
+		
 	}
 
 	return users
@@ -220,10 +226,12 @@ func generateCommunities(users []*store.UserDetails) []*store.CommunityDetails {
 		user := users[rand.Intn(len(users))]
 
 		c = append(c, &store.CommunityDetails{
-			UserID:      user.ID,
-			Name:        name,
+			BaseCommunity: store.BaseCommunity{
+				Name:        name,
+				Slug:        slug.Make(name),
+			},
 			Description: description,
-			Slug:        slug.Make(name),
+			UserID:      user.ID,
 		})
 	}
 
@@ -242,8 +250,8 @@ func generateUserCommunities(num int, communities []*store.CommunityDetails, use
 	return uc
 }
 
-func generatePosts(num int, communities []*store.CommunityDetails, users []*store.UserDetails) []*store.Post {
-	p := make([]*store.Post, num)
+func generatePosts(num int, communities []*store.CommunityDetails, users []*store.UserDetails) []*store.PostDetails {
+	p := make([]*store.PostDetails, num)
 
 	for i := 0; i < num; i++ {
 		user := users[rand.Intn(len(users))]
@@ -251,20 +259,22 @@ func generatePosts(num int, communities []*store.CommunityDetails, users []*stor
 
 		title := titles[i%len(titles)]
 
-		p[i] = &store.Post{
-			Title:       title,
-			Content:     contents[i%len(contents)],
-			Tags:        []string{tags[i%len(tags)]},
-			Slug:        fmt.Sprintf("%s-%d", slug.Make(title), i),
-			UserID:      user.ID,
-			CommunityID: community.ID,
+		p[i] = &store.PostDetails{
+			BasePost: store.BasePost{
+				Title:       title,
+				Content:     contents[i%len(contents)],
+				Tags:        []string{tags[i%len(tags)]},
+				Slug:        fmt.Sprintf("%s-%d", slug.Make(title), i),
+				UserID:      user.ID,
+				CommunityID: community.ID,
+			},
 		}
 	}
 
 	return p
 }
 
-func generateComments(num int, users []*store.UserDetails, posts []*store.Post) []*store.Comment {
+func generateComments(num int, users []*store.UserDetails, posts []*store.PostDetails) []*store.Comment {
 	c := make([]*store.Comment, num)
 
 	for i := 0; i < num; i++ {

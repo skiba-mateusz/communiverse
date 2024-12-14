@@ -16,7 +16,7 @@ var (
 	ErrDuplicateEmail    = fmt.Errorf("user with that email already exists")
 )
 
-type UserOverview struct {
+type BaseUser struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	Username  string `json:"username"`
@@ -24,35 +24,31 @@ type UserOverview struct {
 	AvatarURL string `json:"avatarURL"`
 }
 
+type UserOverview struct {
+	BaseUser
+}
+
 type UserSummary struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Username  string `json:"username"`
+	BaseUser
 	Bio       string `json:"bio"`
-	AvatarID  string `json:"avatarID"`
-	AvatarURL string `json:"avatarURL"`
 	CreatedAt string `json:"createdAt"`
 }
 
 type UserDetails struct {
-	ID        int64    `json:"id"`
-	Name      string   `json:"name"`
-	Username  string   `json:"username"`
+	BaseUser
 	Bio       string   `json:"bio"`
 	Email     string   `json:"email"`
-	AvatarID  string   `json:"avatarID"`
-	AvatarURL string   `json:"avatarURL"`
-	Password  Password `json:"-"`
+	Password  password `json:"-"`
 	Role      Role     `json:"role"`
 	IsActive  bool     `json:"isActive"`
 	CreatedAt string   `json:"createdAt"`
 }
 
-type Password struct {
+type password struct {
 	Hash []byte
 }
 
-func (p *Password) Set(text string) error {
+func (p *password) Set(text string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -62,7 +58,7 @@ func (p *Password) Set(text string) error {
 	return nil
 }
 
-func (p *Password) Matches(text string) bool {
+func (p *password) Matches(text string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(p.Hash), []byte(text)) == nil
 }
 

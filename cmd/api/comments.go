@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5"
-	"github.com/skiba-mateusz/communiverse/internal/store"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/skiba-mateusz/communiverse/internal/store"
 )
 
 type commentKey string
@@ -42,11 +43,13 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 		PostID:  post.ID,
 		UserID:  user.ID,
 		User: store.UserOverview{
-			ID:        user.ID,
-			Name:      user.Name,
-			Username:  user.Username,
-			AvatarID:  user.AvatarID,
-			AvatarURL: avatarURL,
+			BaseUser: store.BaseUser{
+				ID:        user.ID,
+				Name:      user.Name,
+				Username:  user.Username,
+				AvatarID:  user.AvatarID,
+				AvatarURL: avatarURL,
+			},
 		},
 	}
 

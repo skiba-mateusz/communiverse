@@ -5,7 +5,7 @@ import (
 	"database/sql"
 )
 
-type CommunityOverview struct {
+type BaseCommunity struct {
 	ID           int64  `json:"id"`
 	Name         string `json:"name"`
 	Slug         string `json:"slug"`
@@ -13,25 +13,21 @@ type CommunityOverview struct {
 	ThumbnailURL string `json:"thumbnailURL"`
 }
 
+type CommunityOverview struct {
+	BaseCommunity
+}
+
 type CommunitySummary struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
+	BaseCommunity
 	Description  string `json:"description"`
-	Slug         string `json:"slug"`
-	ThumbnailID  string `json:"thumbnailID"`
-	ThumbnailURL string `json:"thumbnailURL"`
-	CreatedAt    string `json:"createdAt"`
 	Role         Role   `json:"role"`
 	NumMembers   int    `json:"numMembers"`
+	CreatedAt    string `json:"createdAt"`
 }
 
 type CommunityDetails struct {
-	ID           int64       `json:"id"`
-	Name         string      `json:"name"`
+	BaseCommunity
 	Description  string      `json:"description"`
-	Slug         string      `json:"slug"`
-	ThumbnailID  string      `json:"thumbnailID"`
-	ThumbnailURL string      `json:"thumbnailURL"`
 	UserID       int64       `json:"creatorID"`
 	User         UserSummary `json:"creator"`
 	Role         Role        `json:"role"`
