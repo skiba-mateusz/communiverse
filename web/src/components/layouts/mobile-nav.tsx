@@ -9,6 +9,7 @@ const StyledMobileNav = styled.nav`
     height: 5rem;
     padding-inline: ${theme.spacing(4)};
     display: none;
+    background-color: ${theme.colors.neutral[50]};
     border-top: 1px solid ${theme.colors.neutral[200]};
     z-index: 1000;
 
