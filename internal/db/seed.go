@@ -175,7 +175,7 @@ func Seed(store store.Storage, db *sql.DB) {
 
 	userCommunities := generateUserCommunities(200, communities, users)
 	for userID, communityID := range userCommunities {
-		if err := store.Communities.Join(ctx, communityID, userID); err != nil {
+		if err := store.Communities.Join(ctx, communityID, userID, "member"); err != nil {
 			log.Println("Error creating user communities:", err)
 			return
 		}

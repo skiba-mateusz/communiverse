@@ -91,6 +91,9 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 			ThumbnailID:  thumbnailID,
 			ThumbnailURL: thumbnailURL,
 		},
+		Role: store.Role{
+			Name: "admin",
+		},
 		Description:  payload.Description,
 		UserID:       user.ID,
 	}
@@ -224,7 +227,7 @@ func (app *application) joinCommunityHandler(w http.ResponseWriter, r *http.Requ
 	community := getCommunityFromContext(r)
 	user := getUserFromContext(r)
 
-	if err := app.store.Communities.Join(r.Context(), community.ID, user.ID); err != nil {
+	if err := app.store.Communities.Join(r.Context(), community.ID, user.ID, "member"); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}

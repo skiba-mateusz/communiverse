@@ -18,7 +18,7 @@ type Storage struct {
 		GetBySlug(context.Context, string, int64) (*CommunityDetails, error)
 		Delete(context.Context, int64) error
 		Update(context.Context, *CommunityDetails) error
-		Join(context.Context, int64, int64) error
+		Join(context.Context, int64, int64, string) error
 		Leave(context.Context, int64, int64) error
 		GetAll(context.Context, int64, PaginatedCommunitiesQuery) ([]CommunitySummary, error)
 		GetUserCommunities(context.Context, int64, PaginatedCommunitiesQuery) ([]CommunityOverview, error)

@@ -46,7 +46,7 @@ func (s *CommunityStore) Create(ctx context.Context, community *CommunityDetails
 			return err
 		}
 
-		if err := s.join(ctx, tx, community.ID, community.UserID); err != nil {
+		if err := s.join(ctx, tx, community.ID, community.UserID, community.Role.Name); err != nil {
 			return err
 		}
 
@@ -188,9 +188,9 @@ func (s *CommunityStore) Update(ctx context.Context, community *CommunityDetails
 	return nil
 }
 
-func (s *CommunityStore) Join(ctx context.Context, communityID, userID int64) error {
+func (s *CommunityStore) Join(ctx context.Context, communityID, userID int64, roleName string) error {
 	return withTx(ctx, s.db, func(tx *sql.Tx) error {
-		if err := s.join(ctx, tx, communityID, userID); err != nil {
+		if err := s.join(ctx, tx, communityID, userID, roleName); err != nil {
 			return err
 		}
 
@@ -381,7 +381,7 @@ func (s *CommunityStore) create(ctx context.Context, tx *sql.Tx, community *Comm
 	return nil
 }
 
-func (s *CommunityStore) join(ctx context.Context, tx *sql.Tx, communityID, userID int64) error {
+func (s *CommunityStore) join(ctx context.Context, tx *sql.Tx, communityID, userID int64, roleName string) error {
 	existsQuery := `
 		SELECT EXISTS (
 			SELECT 1 FROM user_communities WHERE user_id = $1 AND community_id = $2
@@ -409,7 +409,7 @@ func (s *CommunityStore) join(ctx context.Context, tx *sql.Tx, communityID, user
 
 	joinQuery := `
 		INSERT INTO user_communities (user_id, community_id, role_id) 
-		VALUES ($1, $2, (SELECT id FROM roles WHERE name = 'member'))
+		VALUES ($1, $2, (SELECT id FROM roles WHERE name = $3))
 	`
 
 	_, err = tx.ExecContext(
@@ -417,6 +417,7 @@ func (s *CommunityStore) join(ctx context.Context, tx *sql.Tx, communityID, user
 		joinQuery,
 		userID,
 		communityID,
+		roleName,
 	)
 	if err != nil {
 		return err
