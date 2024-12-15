@@ -1,20 +1,20 @@
 import { PostCard } from "./post-card";
-import { Flow } from "@/components/ui/flow";
+import { Stack } from "@/components/ui/stack";
 import { Message } from "@/components/ui/message";
-import { Post } from "@/types/api";
+import { PostSummary } from "@/types/api";
 
-export const PostsList = ({ posts }: { posts: Post[] }) => {
+export const PostsList = ({ posts }: { posts: PostSummary[] }) => {
   if (posts?.length === 0) {
     <Message variant="status">No posts available</Message>;
   }
 
   return (
-    <Flow as="ul">
+    <Stack as="ul" direction="vertical">
       {posts?.map((post) => (
         <li>
           <PostCard post={post} />
         </li>
       ))}
-    </Flow>
+    </Stack>
   );
 };

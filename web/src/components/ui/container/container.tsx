@@ -5,12 +5,15 @@ import { Styles } from "@/types/styles";
 
 interface ContainerProps extends React.PropsWithChildren {
   styles?: Styles;
-  variant?: "full" | "narrow";
+  variant?: "full" | "wide" | "narrow";
 }
 
 const variants = {
   full: css`
     width: calc(100% - 2rem);
+  `,
+  wide: css`
+    width: min(64rem, calc(100% - 2rem));
   `,
   narrow: css`
     width: min(42rem, calc(100% - 2rem));

@@ -1,8 +1,8 @@
 import { api } from "@/lib/api-client";
-import { Post } from "@/types/api";
+import { PostSummary } from "@/types/api";
 import { useQuery } from "@tanstack/react-query";
 
-const getPostApi = async (): Promise<Post[]> => {
+const getPostsApi = async (): Promise<PostSummary[]> => {
   const res = await api.get(`${import.meta.env.VITE_API_URL}/v1/posts`);
   return res.data.data;
 };
@@ -13,7 +13,7 @@ export const usePosts = () => {
     isLoading,
     error,
   } = useQuery({
-    queryFn: getPostApi,
+    queryFn: getPostsApi,
     queryKey: ["posts"],
   });
 

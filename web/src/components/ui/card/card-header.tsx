@@ -2,7 +2,7 @@ import { Styles } from "@/types/styles";
 import { parseStyles } from "@/utils/styles";
 import React from "react";
 import styled, { css } from "styled-components";
-import { Heading } from "../heading";
+import { Heading } from "../typography";
 
 interface CardHeaderProps {
   title: string;

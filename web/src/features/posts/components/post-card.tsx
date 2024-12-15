@@ -2,10 +2,10 @@ import { Link as RouterLink } from "react-router-dom";
 import styled, { css } from "styled-components";
 import Markdown from "react-markdown";
 import { BiCommentDetail } from "react-icons/bi";
-import { Post } from "@/types/api";
+import { PostSummary } from "@/types/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Flow } from "@/components/ui/flow";
+import { Stack } from "@/components/ui/stack";
 import {
   Card,
   CardActions,
@@ -16,27 +16,16 @@ import { Votes } from "@/components/ui/votes";
 import { useVotePost } from "../api/vote-post";
 
 interface PostCardProps {
-  post: Post;
+  post: PostSummary;
 }
 
 const Tag = styled.div`
   ${({ theme }) => css`
-    display: inline-block;
     padding: ${theme.spacing(1)} ${theme.spacing(2)};
-    margin-right: ${theme.spacing(2)};
     background-color: ${theme.colors.blue[500]};
     color: ${theme.colors.neutral[50]};
     font-weight: ${theme.font.weight.bold};
     border-radius: ${theme.border.radius.sm};
-  `}
-`;
-
-const Origin = styled.div`
-  ${({ theme }) => css`
-    margin-bottom: ${theme.spacing(2)};
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(2)};
   `}
 `;
 
@@ -56,13 +45,13 @@ const ContentOverlay = styled.div`
     }
   `}
 `;
-const PostTags = ({ tags }: { tags: string[] }) => {
+export const PostTags = ({ tags }: { tags: string[] }) => {
   return (
-    <div aria-label="Tags">
+    <Stack aria-label="Tags" style={{ flexWrap: "wrap" }}>
       {tags.map((tag, i) => (
         <Tag key={i}>#{tag}</Tag>
       ))}
-    </div>
+    </Stack>
   );
 };
 
@@ -95,11 +84,11 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   return (
     <Card>
-      <RouterLink to={`/communities/${communitySlug}/posts/${postSlug}`}>
+      <RouterLink to={`/app/communities/${communitySlug}/posts/${postSlug}`}>
         <CardHeader
           title={title}
           avatar={
-            <Origin>
+            <Stack style={{ marginBottom: 4 }}>
               <RouterLink
                 to={`/communities/${communitySlug}`}
                 aria-label={`Go to ${name} community`}
@@ -122,16 +111,16 @@ export const PostCard = ({ post }: PostCardProps) => {
                   styles={{ fontWeight: "font.weight.bold" }}
                 />
               </RouterLink>
-            </Origin>
+            </Stack>
           }
         />
         <CardContent>
-          <Flow spacing={2}>
+          <Stack spacing={2} direction="vertical">
             <PostTags tags={tags} />
             <ContentOverlay>
               <Markdown>{truncatedContent + "..."}</Markdown>
             </ContentOverlay>
-          </Flow>
+          </Stack>
         </CardContent>
       </RouterLink>
       <CardActions>
@@ -156,7 +145,7 @@ export const PostCard = ({ post }: PostCardProps) => {
         <Button
           size="small"
           variant="soft"
-          to={`/communities/${communitySlug}/posts/${postSlug}#comments`}
+          to={`/app/communities/${communitySlug}/posts/${postSlug}#comments`}
           aria-label="View comments"
         >
           <BiCommentDetail />

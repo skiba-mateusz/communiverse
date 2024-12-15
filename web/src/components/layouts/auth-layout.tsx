@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/theme-context";
 import { Head } from "@/components/seo";
 import { Box } from "@/components/ui/box";
-import { Heading } from "@/components/ui/heading";
+import { Heading } from "@/components/ui/typography";
 import { Link } from "@/components/ui/link";
 import { GoBackBtn } from "@/components/ui/button";
 

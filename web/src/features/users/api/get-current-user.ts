@@ -1,8 +1,8 @@
 import { api } from "@/lib/api-client";
-import { CurrentUser } from "@/types/api";
+import { UserDetails } from "@/types/api";
 import { useQuery } from "@tanstack/react-query";
 
-const getCurrentUser = async (): Promise<CurrentUser> => {
+const getCurrentUser = async (): Promise<UserDetails> => {
   const res = await api.get("/v1/users/me");
   return res.data.data;
 };

@@ -24,7 +24,7 @@ interface AvatarProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   styles?: Styles;
 }
 
-const Wrapper = styled.div<{ styles: Styles }>`
+const Wrapper = styled.div<{ styles?: Styles }>`
   ${({ theme, styles }) => css`
     display: flex;
     align-items: center;

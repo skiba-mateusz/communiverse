@@ -4,28 +4,30 @@ export interface Role {
   level: number;
 }
 
-export interface CurrentUser {
+export interface BaseUser {
   id: number;
   name: string;
   username: string;
+  avatarID: string;
+  avatarURL: string;
+}
+
+export interface UserOverview extends BaseUser {}
+
+export interface UserSummary extends BaseUser {
+  bio: string;
+  createdAt: string;
+}
+
+export interface UserDetails extends BaseUser {
   email: string;
   bio: string;
-  avatarID: string;
-  avatarURL: string;
   isActive: boolean;
   role: Role;
-  createdAt: Date;
+  createdAt: string;
 }
 
-export interface UserOverview {
-  id: number;
-  name: string;
-  username: string;
-  avatarID: string;
-  avatarURL: string;
-}
-
-export interface CommunityOverview {
+export interface BaseCommunity {
   id: number;
   name: string;
   slug: string;
@@ -33,20 +35,47 @@ export interface CommunityOverview {
   thumbnailURL: string;
 }
 
+export interface CommunityOverview extends BaseCommunity {}
+
+export interface CommunitySummary extends BaseCommunity {
+  description: string;
+  role: Role;
+  numMembers: number;
+  createdAt: string;
+}
+
+export interface CommunityDetails extends BaseCommunity {
+  description: string;
+  userID: number;
+  user: UserSummary;
+  role: Role;
+  numMembers: number;
+  numPosts: number;
+  createdAt: string;
+}
+
 export type VoteValue = 1 | 0 | -1;
 
-export interface Post {
+export interface BasePost {
   id: number;
   title: string;
   content: string;
   slug: string;
   tags: string[];
   communityID: number;
-  community: CommunityOverview;
   authorID: number;
-  author: UserOverview;
   numComments: number;
   votes: number;
   userVote: VoteValue;
-  createdAt: Date;
+  createdAt: string;
+}
+
+export interface PostSummary extends BasePost {
+  community: CommunityOverview;
+  author: UserOverview;
+}
+
+export interface PostDetails extends BasePost {
+  community: CommunitySummary;
+  author: UserSummary;
 }

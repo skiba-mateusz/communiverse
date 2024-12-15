@@ -90,7 +90,7 @@ export const CommunitiesMenu = () => {
           role="menu"
         >
           <li role="presentation">
-            <NavLink to="/app/communities" role="menuitem">
+            <NavLink to="/app/communities" role="menuitem" end>
               <AiOutlineSearch />
               <span>Find Communities</span>
             </NavLink>
@@ -100,7 +100,7 @@ export const CommunitiesMenu = () => {
           ) : (
             communities?.map((community) => (
               <li role="presentation">
-                <NavLink to="/app/communities/sample" role="menuitem">
+                <NavLink to="/app/communities/sample" role="menuitem" end>
                   <Avatar
                     size="small"
                     src={community.thumbnailURL || "/community.svg"}
