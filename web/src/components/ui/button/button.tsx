@@ -41,6 +41,7 @@ export const getVariant = (theme: any, variant: Variants) => {
       `;
     case "outlined":
       return css`
+        background-color: transparent;
         border: 1px solid ${theme.colors.neutral[950]};
       `;
     case "transparent":
