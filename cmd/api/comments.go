@@ -77,8 +77,8 @@ func (app *application) getCommentsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	for _, comment := range comments {
-		comment.User.AvatarURL = app.generateAssetURL(comment.User.AvatarID, "avatars")
+	for i := range comments {
+		comments[i].User.AvatarURL = app.generateAssetURL(comments[i].User.AvatarID, "avatars")
 	}
 
 	nestedComments := buildNestedComments(comments)

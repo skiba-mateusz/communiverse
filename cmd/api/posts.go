@@ -172,9 +172,9 @@ func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	for _, post := range posts {
-		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
-		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
+	for i := range posts {
+		posts[i].Community.ThumbnailURL = app.generateAssetURL(posts[i].Community.ThumbnailID, "thumbnails")
+		posts[i].User.AvatarURL = app.generateAssetURL(posts[i].User.AvatarID, "avatars")
 	}
 
 	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
@@ -208,9 +208,9 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	for _, post := range posts {
-		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
-		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
+	for i := range posts {
+		posts[i].Community.ThumbnailURL = app.generateAssetURL(posts[i].Community.ThumbnailID, "thumbnails")
+		posts[i].User.AvatarURL = app.generateAssetURL(posts[i].User.AvatarID, "avatars")
 	}
 
 	if err = jsonResponse(w, http.StatusOK, posts); err != nil {

@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/disintegration/imaging"
-	"github.com/google/uuid"
 	"image"
 	"image/jpeg"
 	"net/http"
+
+	"github.com/disintegration/imaging"
+	"github.com/google/uuid"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/skiba-mateusz/communiverse/internal/store"
@@ -46,9 +47,9 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	for _, post := range posts {
-		post.User.AvatarURL = app.generateAssetURL(post.User.AvatarID, "avatars")
-		post.Community.ThumbnailURL = app.generateAssetURL(post.Community.ThumbnailID, "thumbnails")
+	for i := range posts {
+		posts[i].User.AvatarURL = app.generateAssetURL(posts[i].User.AvatarID, "avatars")
+		posts[i].Community.ThumbnailURL = app.generateAssetURL(posts[i].Community.ThumbnailID, "thumbnails")
 	}
 
 	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
@@ -81,8 +82,8 @@ func (app *application) getCurrentUserCommunitiesHandler(w http.ResponseWriter, 
 		return
 	}
 
-	for _, community := range communities {
-		community.ThumbnailURL = app.generateAssetURL(community.ThumbnailID, "thumbnails")
+	for i := range communities {
+		communities[i].ThumbnailURL = app.generateAssetURL(communities[i].ThumbnailID, "thumbnails")
 	}
 
 	if err = jsonResponse(w, http.StatusOK, communities); err != nil {

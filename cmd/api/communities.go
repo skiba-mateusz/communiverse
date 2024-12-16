@@ -281,8 +281,8 @@ func (app *application) getCommunitiesHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	for _, community := range communities {
-		community.ThumbnailURL = app.generateAssetURL(community.ThumbnailID, "thumbnails")
+	for i := range communities {
+		communities[i].ThumbnailURL = app.generateAssetURL(communities[i].ThumbnailID, "thumbnails")
 	}
 
 	if err = jsonResponse(w, http.StatusOK, communities); err != nil {
