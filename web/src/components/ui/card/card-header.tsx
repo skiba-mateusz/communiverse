@@ -14,7 +14,7 @@ interface CardHeaderProps {
 
 const StyledCardHeader = styled.header<{ styles?: Styles }>`
   ${({ theme, styles }) => css`
-    padding: ${theme.spacing(4)} ${theme.spacing(4)} 0 ${theme.spacing(4)};
+    padding: ${theme.spacing(4)};
     ${parseStyles({ ...styles }, theme)}
   `}
 `;

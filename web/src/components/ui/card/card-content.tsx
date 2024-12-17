@@ -9,7 +9,7 @@ interface CardContentProps extends React.PropsWithChildren {
 
 const StyledCardContent = styled.div<{ styles?: Styles }>`
   ${({ theme, styles }) => css`
-    padding: ${theme.spacing(4)};
+    padding-inline: ${theme.spacing(4)};
     ${parseStyles({ ...styles }, theme)}
   `}
 `;

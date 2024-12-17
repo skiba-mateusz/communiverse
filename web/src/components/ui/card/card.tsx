@@ -10,19 +10,29 @@ interface StyleProps {
 interface CardProps extends React.PropsWithChildren, StyleProps {}
 
 const StyledCard = styled.article<StyleProps>`
-  ${({ theme, styles }) => css`
-    position: relative;
-    border: 1px solid ${theme.colors.neutral[300]};
-    border-radius: ${theme.border.radius.md};
+  ${({ theme, styles }) => {
+    return css`
+      position: relative;
+      border: 1px solid ${theme.colors.neutral[300]};
+      border-radius: ${theme.border.radius.md};
 
-    &:hover {
-      border: 1px solid ${theme.colors.neutral[400]};
-    }
+      a {
+        z-index: 2;
+      }
 
-    ${parseStyles({ ...styles }, theme)}
-  `}
+      button {
+        z-index: 3;
+      }
+
+      &:hover {
+        border: 1px solid ${theme.colors.neutral[400]};
+      }
+
+      ${parseStyles({ ...styles }, theme)}
+    `;
+  }}
 `;
 
-export const Card = ({ hoverEffect = false, children }: CardProps) => {
-  return <StyledCard>{children}</StyledCard>;
+export const Card = ({ styles, children }: CardProps) => {
+  return <StyledCard styles={styles}>{children}</StyledCard>;
 };

@@ -64,12 +64,12 @@ export const getSize = (theme: any, size: Sizes) => {
       `;
     case "medium":
       return css`
-        padding: ${theme.spacing(4)} ${theme.spacing(6)};
+        padding: ${theme.spacing(3)} ${theme.spacing(6)};
         font-size: ${theme.font.size.sm};
       `;
     case "large":
       return css`
-        padding: ${theme.spacing(6)} ${theme.spacing(8)};
+        padding: ${theme.spacing(4)} ${theme.spacing(8)};
         font-size: ${theme.font.size.md};
       `;
     default:
@@ -87,7 +87,7 @@ const styles = css<StylesProps>`
     font-weight: ${theme.font.weight.semi};
     border: none;
     border-radius: ${theme.border.radius.md};
-    line-height: 1;
+    line-height: 1.5em
     transition: 100ms;
 
     ${getVariant(theme, variant)}

@@ -7,9 +7,9 @@ interface CardContentProps extends React.PropsWithChildren {
   styles?: Styles;
 }
 
-const StyledCardActions = styled.div<{ styles?: Styles }>`
+const StyledCardActions = styled.footer<{ styles?: Styles }>`
   ${({ theme, styles }) => css`
-    padding: 0 ${theme.spacing(4)} ${theme.spacing(4)} ${theme.spacing(4)};
+    padding: ${theme.spacing(4)};
     display: flex;
     align-items: center;
     justify-content: end;
