@@ -1,7 +1,7 @@
 import { Container } from "@/components/ui/container";
 import { Head } from "@/components/seo";
 import { Heading } from "@/components/ui/typography";
-import { useCurrentUserFeed } from "@/features/users/api/get-current-user-feed";
+
 import { FeedView } from "@/features/posts/components/feed-view";
 
 export const HomeRoute = () => {

@@ -16,17 +16,19 @@ const StyledVotes = styled.div`
     display: flex;
     align-items: center;
     gap: ${theme.spacing(2)};
-    background-color: ${theme.colors.neutral[200]};
     font-weight: ${theme.font.weight.semi};
-    border-radius: ${theme.border.radius.md};
-    overflow: hidden;
   `}
 `;
 
 const UpvoteButton = styled.button<{ isActive: boolean }>`
   ${({ theme, isActive }) => css`
-    padding: ${theme.spacing(2)};
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: none;
+    border-radius: ${theme.border.radius.md};
     background: transparent;
     transition: 200ms;
 
@@ -41,9 +43,14 @@ const UpvoteButton = styled.button<{ isActive: boolean }>`
 
 const DownvoteButton = styled.button<{ isActive: boolean }>`
   ${({ theme, isActive }) => css`
-    padding: ${theme.spacing(2)};
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: none;
-    background-color: transparent;
+    border-radius: ${theme.border.radius.md};
+    background: transparent;
     transition: 200ms;
 
     &:hover {

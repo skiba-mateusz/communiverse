@@ -9,7 +9,8 @@ const InputWrapper = styled.div`
 const StyledInput = styled.input`
   ${({ theme }) => css`
     width: 100%;
-    padding: 0.5em 1em;
+    height: 2.5rem;
+    padding: ${theme.spacing(2)} ${theme.spacing(4)};
     background-color: ${theme.colors.neutral[50]};
     border: 1px solid ${theme.colors.neutral[300]};
     border-radius: ${theme.border.radius.md};

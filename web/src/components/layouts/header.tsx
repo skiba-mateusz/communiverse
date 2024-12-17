@@ -28,7 +28,7 @@ export const Header = () => {
     <StyledHeader>
       <Container>
         <Logo />
-        <Button variant="soft" size="small">
+        <Button variant="transparent">
           <Avatar
             src={user?.avatarURL || "/avatar.svg"}
             name={user?.username || "Unknown"}

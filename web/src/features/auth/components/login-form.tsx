@@ -16,9 +16,7 @@ export const LoginForm = () => {
     >
       <Input name="email" label="Email Address" type="email" />
       <PasswordInput name="password" label="Password" withForgotLink />
-      <Button size="medium" isLoading={isPending}>
-        Log In
-      </Button>
+      <Button isLoading={isPending}>Log In</Button>
     </Form>
   );
 };

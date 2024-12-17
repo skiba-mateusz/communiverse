@@ -11,6 +11,7 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  CardLink,
 } from "@/components/ui/card";
 import { Votes } from "@/components/ui/votes";
 import { useVotePost } from "../api/vote-post";
@@ -84,45 +85,42 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   return (
     <Card>
-      <RouterLink to={`/app/communities/${communitySlug}/posts/${postSlug}`}>
-        <CardHeader
-          title={title}
-          avatar={
-            <Stack style={{ marginBottom: 4 }}>
-              <RouterLink
-                to={`/communities/${communitySlug}`}
-                aria-label={`Go to ${name} community`}
-              >
-                <Avatar
-                  src={thumbnailURL || "/community.svg"}
-                  alt={`${name}'s thumbnail`}
-                  name={name}
-                  styles={{ fontWeight: "font.weight.bold" }}
-                />
-              </RouterLink>
-              <RouterLink
-                to={`/users/${username}`}
-                aria-label={`Go to ${username}'s profile`}
-              >
-                <Avatar
-                  src={avatarURL || "/avatar.svg"}
-                  alt={`${username}'s avatar`}
-                  name={username}
-                  styles={{ fontWeight: "font.weight.bold" }}
-                />
-              </RouterLink>
-            </Stack>
-          }
-        />
-        <CardContent>
-          <Stack spacing={2} direction="vertical">
-            <PostTags tags={tags} />
-            <ContentOverlay>
-              <Markdown>{truncatedContent + "..."}</Markdown>
-            </ContentOverlay>
+      <CardLink to={`/app/communities/${communitySlug}/posts/${postSlug}`} />
+      <CardHeader
+        title={title}
+        avatar={
+          <Stack style={{ marginBottom: 4 }}>
+            <RouterLink
+              to={`/communities/${communitySlug}`}
+              aria-label={`Go to ${name} community`}
+            >
+              <Avatar
+                src={thumbnailURL || "/community.svg"}
+                alt={`${name}'s thumbnail`}
+                name={name}
+              />
+            </RouterLink>
+            <RouterLink
+              to={`/users/${username}`}
+              aria-label={`Go to ${username}'s profile`}
+            >
+              <Avatar
+                src={avatarURL || "/avatar.svg"}
+                alt={`${username}'s avatar`}
+                name={username}
+              />
+            </RouterLink>
           </Stack>
-        </CardContent>
-      </RouterLink>
+        }
+      />
+      <CardContent>
+        <Stack spacing={2} direction="vertical">
+          <PostTags tags={tags} />
+          <ContentOverlay>
+            <Markdown>{truncatedContent + "..."}</Markdown>
+          </ContentOverlay>
+        </Stack>
+      </CardContent>
       <CardActions>
         <Votes
           initialVotes={votes}
@@ -143,8 +141,7 @@ export const PostCard = ({ post }: PostCardProps) => {
           }
         />
         <Button
-          size="small"
-          variant="soft"
+          variant="transparent"
           to={`/app/communities/${communitySlug}/posts/${postSlug}#comments`}
           aria-label="View comments"
         >

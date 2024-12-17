@@ -13,7 +13,7 @@ export const CommunitiesList = ({
   }
 
   return (
-    <Grid as="ul">
+    <Grid as="ul" styles={{}}>
       {communities.map((community, index) => (
         <GridItem as="li" span={[12, 6, 4]} key={index}>
           <CommunityCard community={community} />

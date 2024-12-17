@@ -26,7 +26,7 @@ const Nav = styled.nav`
     flex-direction: column;
 
     @media (min-width: ${theme.breakpoints.lg}) {
-      & li:nth-of-type(3) {
+      & > ul > li:nth-of-type(3) {
         display: none;
       }
     }

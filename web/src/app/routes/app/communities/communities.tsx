@@ -7,7 +7,7 @@ import { Loader } from "@/components/ui/loader";
 import { Message } from "@/components/ui/message";
 
 export const CommunitiesRoute = () => {
-  const { communities, isLoading, error } = useCommunities();
+  const { communities = [], isLoading, error } = useCommunities();
 
   if (isLoading) return <Loader />;
   if (error)
@@ -25,7 +25,7 @@ export const CommunitiesRoute = () => {
           <Heading as="h1" underlined styles={{ marginBottom: [8, 10, 12] }}>
             Communities
           </Heading>
-          <CommunitiesList communities={communities || []} />
+          <CommunitiesList communities={communities} />
         </Container>
       </section>
     </>

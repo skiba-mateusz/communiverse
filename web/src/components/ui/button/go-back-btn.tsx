@@ -13,9 +13,10 @@ interface GoBackBtnProps {
 const StyledGoBackBtn = styled.button<GoBackBtnProps>`
   ${({ theme, size = "medium", styles }) => css`
     margin-bottom: ${theme.spacing(4)};
+    padding-block: ${theme.spacing(2)};
     display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
+
+    gap: ${theme.spacing(2)};
     background: transparent;
     color: ${theme.colors.blue[500]};
     font-weight: ${theme.font.weight.semi};

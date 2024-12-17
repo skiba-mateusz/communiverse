@@ -20,14 +20,20 @@ export const CommunityCard = ({
   const isMember = roleName !== "Visitor";
 
   return (
-    <Card styles={{ display: ["flex", "block", "block"] }}>
+    <Card
+      styles={{
+        height: "100%",
+        display: "flex",
+        flexDirection: ["row", "column", "column"],
+      }}
+    >
       <CardLink to={`/app/communities/${slug}`} />
       <CardMedia
         src={thumbnailURL || "/community.svg"}
         alt={`${name} community thumbnail`}
         styles={{ maxWidth: ["6rem", "100%", "100%"], width: "100%" }}
       />
-      <CardContent styles={{ width: "100%", marginBlock: "auto" }}>
+      <CardContent styles={{ marginBlock: "auto", flex: "1" }}>
         <Stack direction="vertical" spacing={2}>
           <Typography
             styles={{
@@ -47,7 +53,7 @@ export const CommunityCard = ({
         </Stack>
       </CardContent>
       <CardActions>
-        <Button full disabled={isMember}>
+        <Button variant="outlined" full disabled={isMember}>
           {!isMember ? `Join` : "Member"}
         </Button>
       </CardActions>

@@ -27,8 +27,9 @@ const variants = (theme: any, variant: Variant) => {
 
 const StyledMessage = styled.p<MessageProps>`
   ${({ theme, variant, styles }) => css`
-    padding: var(--size-50) var(--size-100);
-    border-radius: var(--size-100);
+    padding: ${theme.spacing(4)};
+    border-radius: ${theme.border.radius.md};
+    font-weight: ${theme.font.weight.semi};
     ${variants(theme, variant)}
     ${parseStyles({ ...styles }, theme)}
   `}

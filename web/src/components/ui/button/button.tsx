@@ -6,9 +6,10 @@ import { Sizes, Styles } from "@/types/styles";
 import { Link } from "react-router-dom";
 
 type Variants = "filled" | "soft" | "outlined" | "transparent";
+type ButtonSizes = Sizes | "icon";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: Sizes;
+  size?: ButtonSizes;
   variant?: Variants;
   full?: boolean;
   isLoading?: boolean;
@@ -19,7 +20,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 interface StylesProps {
-  size: Sizes;
+  size: ButtonSizes;
   variant: Variants;
   full: boolean;
   styles?: Styles;
@@ -48,37 +49,47 @@ export const getVariant = (theme: any, variant: Variants) => {
       return css`
         background-color: transparent;
         border: none;
+        &:hover {
+          opacity: 1;
+          background-color: ${theme.colors.neutral[200]};
+        }
       `;
-
     default:
       throw new Error(`unknown variant: ${variant}`);
   }
 };
 
-export const getSize = (theme: any, size: Sizes) => {
+export const getSize = (theme: any, size: ButtonSizes) => {
   switch (size) {
     case "small":
       return css`
-        padding: ${theme.spacing(2)} ${theme.spacing(4)};
+        height: 2.25rem;
+        padding-inline: ${theme.spacing(2)};
         font-size: ${theme.font.size.xs};
       `;
     case "medium":
       return css`
-        padding: ${theme.spacing(3)} ${theme.spacing(6)};
-        font-size: ${theme.font.size.sm};
+        height: 2.5rem;
+        padding-inline: ${theme.spacing(3)};
       `;
     case "large":
       return css`
-        padding: ${theme.spacing(4)} ${theme.spacing(8)};
-        font-size: ${theme.font.size.md};
+        height: 2.75rem;
+        padding-inline: ${theme.spacing(4)};
+      `;
+    case "icon":
+      return css`
+        height: 2.5rem;
+        width: 2.5rem;
       `;
     default:
-      return null;
+      throw new Error(`unknown size: ${size}`);
   }
 };
 
 const styles = css<StylesProps>`
   ${({ theme, variant, size, full, styles }) => css`
+    padding-block: ${theme.spacing(2)};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,18 +98,18 @@ const styles = css<StylesProps>`
     font-weight: ${theme.font.weight.semi};
     border: none;
     border-radius: ${theme.border.radius.md};
-    line-height: 1.5em
-    transition: 100ms;
+    transition: 200ms;
+
+    &:hover {
+      opacity: 0.9;
+    }
+    &:active {
+      transform: scale(0.98);
+    }
 
     ${getVariant(theme, variant)}
     ${getSize(theme, size)}
     ${full ? "width: 100%;" : ""}
-
-
-
-    &:active {
-      transform: scale(0.98);
-    }
 
     ${parseStyles({ ...styles }, theme)}
   `}
@@ -142,7 +153,7 @@ export const Button = ({
       styles={styles}
       {...restProps}
     >
-      {isLoading ? <Loader /> : children}
+      {isLoading ? <Loader styles={{ padding: 0 }} /> : children}
     </Component>
   );
 };

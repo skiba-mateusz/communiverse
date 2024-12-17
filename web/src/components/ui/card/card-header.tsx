@@ -6,9 +6,7 @@ import { Heading } from "../typography";
 
 interface CardHeaderProps {
   title: string;
-  subheader?: string;
   avatar?: React.ReactNode;
-  action?: React.ReactNode;
   styles?: Styles;
 }
 
@@ -21,9 +19,7 @@ const StyledCardHeader = styled.header<{ styles?: Styles }>`
 
 export const CardHeader = ({
   title,
-  subheader,
   avatar,
-  action,
   styles,
   ...restProps
 }: CardHeaderProps) => {

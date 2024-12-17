@@ -5,12 +5,12 @@ import styled, { css } from "styled-components";
 
 const sizes = {
   small: css`
-    height: 1.5rem;
-    width: 1.5rem;
+    height: 2rem;
+    width: 2rem;
   `,
   medium: css`
-    height: 3rem;
-    width: 3rem;
+    height: 4rem;
+    width: 4rem;
   `,
   large: css`
     height: 6rem;
@@ -29,9 +29,15 @@ const Wrapper = styled.div<{ styles?: Styles }>`
     display: flex;
     align-items: center;
     gap: ${theme.spacing(2)};
+
+    & > span {
+      font-weight: ${theme.font.weight.semi};
+    }
+
     &:hover img {
       scale: 1.1;
     }
+
     ${parseStyles({ ...styles }, theme)}
   `}
 `;
@@ -45,7 +51,7 @@ const StyledAvatar = styled.img<{ size: Sizes }>`
   ${({ size }) => css`
     ${sizes[size]}
     object-fit: cover;
-    transition: 200ms;
+    transition: 300ms;
   `}
 `;
 
@@ -60,12 +66,7 @@ export const Avatar = ({
   return (
     <Wrapper styles={styles}>
       <Hidden>
-        <StyledAvatar
-          src={src}
-          alt={alt}
-          size={size}
-          {...restProps}
-        ></StyledAvatar>
+        <StyledAvatar src={src} alt={alt} size={size} {...restProps} />
       </Hidden>
       {name ? <span>{name}</span> : ""}
     </Wrapper>

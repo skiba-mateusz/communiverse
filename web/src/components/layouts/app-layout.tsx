@@ -15,6 +15,10 @@ const Main = styled.main`
     padding-block: ${theme.spacing(4)};
     overflow-y: auto;
     scrollbar-width: thin;
+
+    @media (max-width: ${theme.breakpoints.md}) {
+      height: calc(100vh - 9rem);
+    }
   `}
 `;
 

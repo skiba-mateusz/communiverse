@@ -1,14 +1,9 @@
+import { useState } from "react";
+import styled, { css } from "styled-components";
+import { AiFillCaretDown, AiOutlineTeam, AiFillCaretUp } from "react-icons/ai";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/ui/link";
-import { useRef, useState } from "react";
-import {
-  AiFillCaretDown,
-  AiOutlineTeam,
-  AiFillCaretUp,
-  AiOutlineSearch,
-} from "react-icons/ai";
-import styled, { css } from "styled-components";
 import { useCurrentUserCommunities } from "../api/get-current-user-communities";
 import { Message } from "@/components/ui/message";
 import { Loader } from "@/components/ui/loader";
@@ -23,35 +18,26 @@ const StyledCommunitiesMenu = styled.div`
 `;
 
 const MenuHeader = styled.header`
-  ${({ theme }) => css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: ${theme.spacing(4)};
+  position: relative;
+  display: flex;
+  align-items: center;
 
-    & > button {
-      aspect-ratio: 1/1;
-      padding: ${theme.spacing(1)};
+  & > a {
+    flex: 1;
+  }
 
-      & > svg {
-        font-size: ${theme.font.size.sm};
-      }
-    }
-  `}
+  & > button {
+    top: 0;
+    right: 0;
+    position: absolute;
+  }
 `;
 
-const MenuTitle = styled.div`
+const MenuTitle = styled(NavLink)`
   ${({ theme }) => css`
     display: flex;
     align-items: center;
     gap: ${theme.spacing(2)};
-  `}
-`;
-
-const MenuList = styled.ul`
-  ${({ theme }) => css`
-    border: 1px solid ${theme.colors.neutral[300]};
-    border-right: 0;
   `}
 `;
 
@@ -60,41 +46,40 @@ export const CommunitiesMenu = () => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (error) {
-    return <Message variant="alert">{getAxiosErrorMessage(error)}</Message>;
+    return (
+      <Message variant="alert">
+        There was an error trying to display your communities
+      </Message>
+    );
   }
 
   return (
     <StyledCommunitiesMenu>
       <MenuHeader>
-        <MenuTitle>
+        <MenuTitle to="/app/communities">
           <AiOutlineTeam />
           <span>Communities</span>
         </MenuTitle>
         <Button
-          id="user-communities-btn"
-          variant="soft"
+          size="icon"
+          variant="transparent"
           onClick={() => setIsExpanded((prev) => !prev)}
           aria-haspopup="menu"
           aria-label={
             isExpanded ? "Collapse communities menu" : "Expand communities menu"
           }
           aria-expanded={isExpanded}
+          aria-controls="user-communities"
         >
           {isExpanded ? <AiFillCaretUp /> : <AiFillCaretDown />}
         </Button>
       </MenuHeader>
       {isExpanded ? (
-        <MenuList
+        <ul
           id="user-communities"
           aria-label="List of user communities"
           role="menu"
         >
-          <li role="presentation">
-            <NavLink to="/app/communities" role="menuitem" end>
-              <AiOutlineSearch />
-              <span>Find Communities</span>
-            </NavLink>
-          </li>
           {isLoading ? (
             <Loader />
           ) : (
@@ -110,7 +95,7 @@ export const CommunitiesMenu = () => {
               </li>
             ))
           )}
-        </MenuList>
+        </ul>
       ) : null}
     </StyledCommunitiesMenu>
   );

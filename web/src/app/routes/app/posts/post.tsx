@@ -6,7 +6,6 @@ import { Heading } from "@/components/ui/typography";
 import { usePost } from "@/features/posts/api/get-post";
 import { Loader } from "@/components/ui/loader";
 import { Message } from "@/components/ui/message";
-import { getAxiosErrorMessage } from "@/utils/errors";
 import { Stack } from "@/components/ui/stack";
 import { Grid, GridItem } from "@/components/ui/grid";
 import { Votes } from "@/components/ui/votes";
@@ -35,7 +34,9 @@ export const PostRoute = () => {
 
   if (isLoading) return <Loader size="medium" />;
   if (error)
-    return <Message variant="alert">{getAxiosErrorMessage(error)}</Message>;
+    return (
+      <Message variant="alert">There was an error trying to get post</Message>
+    );
   if (!post) return null;
 
   const {
