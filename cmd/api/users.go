@@ -1,17 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"image"
-	"image/jpeg"
 	"net/http"
-
-	"github.com/disintegration/imaging"
-	"github.com/google/uuid"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/skiba-mateusz/communiverse/internal/store"
+	"github.com/skiba-mateusz/communiverse/internal/uploader"
 )
 
 type userKey string
@@ -176,24 +172,20 @@ func (app *application) updateCurrentUserHandler(w http.ResponseWriter, r *http.
 			return
 		}
 
-		resizedImg := imaging.Fill(img, 256, 256, imaging.Center, imaging.Lanczos)
-
-		buf := new(bytes.Buffer)
-		if err = jpeg.Encode(buf, resizedImg, nil); err != nil {
+		id, _, err := app.uploader.ProcessAndUploadImage(ctx, img, uploader.UploadImageOptions{
+			Height: 256,
+			Width: 256,
+			Quality: 95,
+			MimeType: "image/jpeg",
+			Folder: "avatars",
+		})
+		if err != nil {
 			app.internalServerError(w, r, err)
 			return
 		}
 
-		avatarID := uuid.New().String()
-		key := fmt.Sprintf("avatars/%s", avatarID)
-
-		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key, "image/jpeg"); err != nil {
-			app.internalServerError(w, r, err)
-			return
-		}
-
-		user.AvatarID = avatarID
-		user.AvatarURL = app.generateAssetURL(avatarID, "avatars")
+		user.AvatarID = id
+		user.AvatarURL = app.generateAssetURL(id, "avatars")
 	}
 
 	if err = app.store.Users.Update(ctx, user); err != nil {

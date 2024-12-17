@@ -1,18 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"image"
-	"image/jpeg"
 	"net/http"
-
-	"github.com/disintegration/imaging"
-	"github.com/google/uuid"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/skiba-mateusz/communiverse/internal/store"
+	"github.com/skiba-mateusz/communiverse/internal/uploader"
 )
 
 type communityKey string
@@ -57,19 +52,14 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	resizedImg := imaging.Fill(img, 400, 225, imaging.Center, imaging.Lanczos)
-
-	buf := new(bytes.Buffer)
-
-	if err = jpeg.Encode(buf, resizedImg, nil); err != nil {
-		app.internalServerError(w, r, err)
-		return
-	}
-
-	thumbnailID := uuid.New().String()
-	key := fmt.Sprintf("thumbnails/%s", thumbnailID)
-
-	if err = app.uploader.UploadFile(ctx, buf.Bytes(), key, "image/jpeg"); err != nil {
+	id, _, err := app.uploader.ProcessAndUploadImage(ctx, img, uploader.UploadImageOptions{
+		Width: 400,
+		Height: 225,
+		Quality: 95,
+		MimeType: "image/jpeg",
+		Folder: "thumbnails",
+	})		
+	if err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -82,13 +72,13 @@ func (app *application) createCommunityHandler(w http.ResponseWriter, r *http.Re
 
 	user := getUserFromContext(r)
 
-	thumbnailURL := app.generateAssetURL(thumbnailID, "thumbnails")
+	thumbnailURL := app.generateAssetURL(id, "thumbnails")
 
 	community := &store.CommunityDetails{
 		BaseCommunity: store.BaseCommunity{
 			Name:         payload.Name,
 			Slug:         slug,
-			ThumbnailID:  thumbnailID,
+			ThumbnailID:  id,
 			ThumbnailURL: thumbnailURL,
 		},
 		Role: store.Role{
@@ -187,25 +177,19 @@ func (app *application) updateCommunityHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		resizedImg := imaging.Fill(img, 400, 225, imaging.Center, imaging.Lanczos)
-
-		buf := new(bytes.Buffer)
-
-		if err = jpeg.Encode(buf, resizedImg, nil); err != nil {
+		id, _, err := app.uploader.ProcessAndUploadImage(ctx, img, uploader.UploadImageOptions{
+			Width: 400,
+			Height: 225,
+			Quality: 95,
+			MimeType: "image/jpeg",
+			Folder: "thumbnails",
+		})
+		if err != nil {
 			app.internalServerError(w, r, err)
-			return
 		}
 
-		thumbnailID := uuid.New().String()
-		key := fmt.Sprintf("thumbnails/%s", thumbnailID)
-
-		if err = app.uploader.UploadFile(ctx, buf.Bytes(), key, "image/jpeg"); err != nil {
-			app.internalServerError(w, r, err)
-			return
-		}
-
-		community.ThumbnailID = thumbnailID
-		community.ThumbnailURL = app.generateAssetURL(thumbnailID, "thumbnails")
+		community.ThumbnailID = id
+		community.ThumbnailURL = app.generateAssetURL(id, "thumbnails")
 	}
 
 	if err = app.store.Communities.Update(ctx, community); err != nil {
