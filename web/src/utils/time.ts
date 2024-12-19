@@ -7,5 +7,5 @@ export const formatDate = (
 ) => {
   const fixedStr = dateStr.replace(/\.d{4,}/, (match) => match.slice(0, 4));
   const date = new Date(fixedStr);
-  return new Intl.DateTimeFormat(navigator.language, options).format(date);
+  return new Intl.DateTimeFormat("en-EN", options).format(date);
 };

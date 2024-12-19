@@ -82,6 +82,15 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: "communities/:communitySlug",
+        lazy: async () => {
+          const { CommunityRoute } = await import(
+            "./routes/app/communities/community.tsx"
+          );
+          return { Component: CommunityRoute };
+        },
+      },
+      {
         path: "communities/:communitySlug/posts/:postSlug",
         lazy: async () => {
           const { PostRoute } = await import("./routes/app/posts/post.tsx");

@@ -47,7 +47,7 @@ export interface CommunitySummary extends BaseCommunity {
 export interface CommunityDetails extends BaseCommunity {
   description: string;
   userID: number;
-  user: UserSummary;
+  creator: UserSummary;
   role: Role;
   numMembers: number;
   numPosts: number;
