@@ -8,6 +8,7 @@ import { Message } from "@/components/ui/message";
 import { Stack } from "@/components/ui/stack";
 import { Heading, Typography } from "@/components/ui/typography";
 import { useCommunity } from "@/features/communities/api/get-community";
+import { CommunityButton } from "@/features/communities/components/community-button";
 import { formatDate } from "@/utils/time";
 
 export const CommunityRoute = () => {
@@ -30,6 +31,7 @@ export const CommunityRoute = () => {
     numMembers,
     numPosts,
     createdAt,
+    role,
     creator,
   } = community;
 
@@ -112,7 +114,7 @@ export const CommunityRoute = () => {
               </Stack>
               <Typography
                 styles={{
-                  marginTop: 6,
+                  marginBlock: 6,
                   maxWidth: "44ch",
                   textAlign: ["center", "center", "left"],
                   marginInline: ["auto", "auto", 0],
@@ -121,6 +123,7 @@ export const CommunityRoute = () => {
               >
                 {description}
               </Typography>
+              <CommunityButton role={role} />
             </Container>
           </section>
         </GridItem>
