@@ -5,7 +5,7 @@ import { PostSummary } from "@/types/api";
 
 export const PostsList = ({ posts }: { posts: PostSummary[] }) => {
   if (posts.length === 0) {
-    <Message $variant="status">No posts available</Message>;
+    return <Message $variant="status">No posts available</Message>;
   }
 
   return (

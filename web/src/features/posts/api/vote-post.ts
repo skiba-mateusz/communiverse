@@ -28,6 +28,7 @@ export const useVotePost = () => {
 
   const { mutate: vote, isPending } = useMutation({
     mutationFn: votePostApi,
+    onMutate: () => {},
     onError: (err) => {
       error(getAxiosErrorMessage(err));
     },

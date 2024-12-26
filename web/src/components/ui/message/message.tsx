@@ -23,7 +23,7 @@ const variants = (theme: any, variant: Variant) => {
       `;
     case "status":
       return css`
-        background-color: blue;
+        background-color: ${theme.colors.blue[500]};
       `;
     default:
       throw new Error(`unknown variant: ${variant}`);

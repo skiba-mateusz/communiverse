@@ -9,6 +9,9 @@ import { Stack } from "@/components/ui/stack";
 import { Heading, Typography } from "@/components/ui/typography";
 import { useCommunity } from "@/features/communities/api/get-community";
 import { CommunityButton } from "@/features/communities/components/community-button";
+import { useCommunityPosts } from "@/features/posts/api/get-community-posts";
+import { CommunityPostsView } from "@/features/posts/components/community-posts-view";
+import { PostsList } from "@/features/posts/components/posts-list";
 import { formatDate } from "@/utils/time";
 import { Link } from "react-router-dom";
 
@@ -38,12 +41,19 @@ export const CommunityRoute = () => {
 
   return (
     <>
-      <Head title="Communities" />
+      <Head title={`${name}`} />
       <Container $variant="wide">
         <Grid>
           <GridItem $span={[12, 8, 8]}>
             <section>
-              <Typography>TODO: community posts</Typography>
+              <Heading
+                as="h2"
+                $underlined
+                $styles={{ marginBottom: [8, 10, 12] }}
+              >
+                {name}'s Posts
+              </Heading>
+              <CommunityPostsView />
             </section>
           </GridItem>
           <GridItem $span={[12, 4, 4]}>
