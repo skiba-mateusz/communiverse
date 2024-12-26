@@ -3,9 +3,13 @@ import styled, { css } from "styled-components";
 import { parseStyles } from "@/utils/styles";
 import { Styles } from "@/types/styles";
 
-interface ContainerProps extends React.PropsWithChildren {
-  styles?: Styles;
-  variant?: "full" | "wide" | "narrow";
+interface ContainerStyles {
+  $styles?: Styles;
+  $variant?: "full" | "wide" | "narrow";
+}
+
+interface ContainerProps extends React.PropsWithChildren, ContainerStyles {
+  as?: React.ElementType;
 }
 
 const variants = {
@@ -20,12 +24,29 @@ const variants = {
   `,
 };
 
-export const Container = styled.div<ContainerProps>`
-  ${({ theme, variant, styles }) => css`
-    ${variants[variant || "full"]};
+export const StyledContainer = styled.div<ContainerStyles>`
+  ${({ theme, $variant = "full", $styles }) => css`
+    ${variants[$variant]};
     margin-inline: auto;
-    ${parseStyles({ ...styles }, theme)}
+    ${parseStyles({ ...$styles }, theme)}
   `}
 `;
 
-Container.displayName = "Container";
+export const Container = ({
+  $styles,
+  $variant,
+  as,
+  children,
+  ...restProps
+}: ContainerProps) => {
+  return (
+    <StyledContainer
+      $styles={$styles}
+      $variant={$variant}
+      as={as}
+      {...restProps}
+    >
+      {children}
+    </StyledContainer>
+  );
+};

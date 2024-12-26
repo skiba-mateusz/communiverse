@@ -5,13 +5,15 @@ import { getSize } from "./button";
 import { Sizes, Styles } from "@/types/styles";
 import { parseStyles } from "@/utils/styles";
 
-interface GoBackBtnProps {
-  size?: Sizes;
-  styles?: Styles;
+interface GoBackBtnStyles {
+  $size?: Sizes;
+  $styles?: Styles;
 }
 
-const StyledGoBackBtn = styled.button<GoBackBtnProps>`
-  ${({ theme, size = "medium", styles }) => css`
+interface GoBackBtnProps extends GoBackBtnStyles {}
+
+const StyledGoBackBtn = styled.button<GoBackBtnStyles>`
+  ${({ theme, $size = "medium", $styles }) => css`
     margin-bottom: ${theme.spacing(4)};
     padding-block: ${theme.spacing(2)};
     display: flex;
@@ -22,7 +24,7 @@ const StyledGoBackBtn = styled.button<GoBackBtnProps>`
     font-weight: ${theme.font.weight.semi};
     border: none;
 
-    ${getSize(theme, size)}
+    ${getSize(theme, $size)}
 
     & > * {
       transition: 300ms;
@@ -36,15 +38,24 @@ const StyledGoBackBtn = styled.button<GoBackBtnProps>`
       transform: translateX(-25%);
     }
 
-    ${parseStyles({ ...styles }, theme)}
+    ${parseStyles({ ...$styles }, theme)}
   `}
 `;
 
-export const GoBackBtn = ({ size = "medium", styles }: GoBackBtnProps) => {
+export const GoBackBtn = ({
+  $size = "medium",
+  $styles,
+  ...restProps
+}: GoBackBtnProps) => {
   const navigate = useNavigate();
 
   return (
-    <StyledGoBackBtn styles={styles} size={size} onClick={() => navigate(-1)}>
+    <StyledGoBackBtn
+      $styles={$styles}
+      $size={$size}
+      onClick={() => navigate(-1)}
+      {...restProps}
+    >
       <AiOutlineLeft /> <span>Back</span>
     </StyledGoBackBtn>
   );

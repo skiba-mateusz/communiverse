@@ -43,14 +43,14 @@ export const AuthLayout = ({
         <img src={`/logo-${theme}.svg`} alt="Communiverse Logo" />
         <Box
           as="section"
-          styles={{
+          $styles={{
             padding: [6, 8, 10],
             maxWidth: "26rem",
             width: "100%",
           }}
         >
           {canGoBack ? <GoBackBtn /> : null}
-          <Heading as="h1" styles={{ textAlign: "center", marginBottom: 6 }}>
+          <Heading as="h1" $styles={{ textAlign: "center", marginBottom: 6 }}>
             {title}
           </Heading>
           {children}

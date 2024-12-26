@@ -9,13 +9,13 @@ export const CommunitiesList = ({
   communities: CommunitySummary[];
 }) => {
   if (communities.length === 0) {
-    <Message variant="status">No communities available</Message>;
+    <Message $variant="status">No communities available</Message>;
   }
 
   return (
-    <Grid as="ul" styles={{}}>
+    <Grid as="ul">
       {communities.map((community, index) => (
-        <GridItem as="li" span={[12, 6, 4]} key={index}>
+        <GridItem as="li" $span={[12, 6, 4]} key={index}>
           <CommunityCard community={community} />
         </GridItem>
       ))}

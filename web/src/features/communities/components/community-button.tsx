@@ -18,17 +18,28 @@ export const CommunityButton = ({ role }: { role: Role }) => {
         onClick={deleteCommunity}
         isLoading={isDeleting}
         disabled={isDeleting}
+        $full
       >
         Delete Community
       </Button>
     );
 
   return isMember ? (
-    <Button onClick={leaveCommunity} isLoading={isLeaving} disabled={isLeaving}>
+    <Button
+      onClick={leaveCommunity}
+      isLoading={isLeaving}
+      disabled={isLeaving}
+      $full
+    >
       Leave Community
     </Button>
   ) : (
-    <Button onClick={joinCommunity} isLoading={isJoining} disabled={isJoining}>
+    <Button
+      onClick={joinCommunity}
+      isLoading={isJoining}
+      disabled={isJoining}
+      $full
+    >
       Join Community
     </Button>
   );

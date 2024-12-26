@@ -12,7 +12,7 @@ export const CommunitiesRoute = () => {
   if (isLoading) return <Loader />;
   if (error)
     return (
-      <Message variant="alert">
+      <Message $variant="alert">
         There was en error trying to get communities
       </Message>
     );
@@ -21,8 +21,8 @@ export const CommunitiesRoute = () => {
     <>
       <Head title="Communities" />
       <section>
-        <Container variant="wide">
-          <Heading as="h1" underlined styles={{ marginBottom: [8, 10, 12] }}>
+        <Container $variant="wide">
+          <Heading as="h1" $underlined $styles={{ marginBottom: [8, 10, 12] }}>
             Communities
           </Heading>
           <CommunitiesList communities={communities} />

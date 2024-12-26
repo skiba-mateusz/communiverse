@@ -48,8 +48,8 @@ const StyledToaster = styled.div`
   `}
 `;
 
-const StyledToast = styled.div<{ type: ToastType }>`
-  ${({ theme, type }) => css`
+const StyledToast = styled.div<{ $type: ToastType }>`
+  ${({ theme, $type }) => css`
     position: relative;
     padding: ${theme.spacing(2)};
     display: flex;
@@ -60,7 +60,7 @@ const StyledToast = styled.div<{ type: ToastType }>`
     font-weight: ${theme.font.weight.semi};
     border-radius: ${theme.border.radius.md};
     overflow: hidden;
-    ${getType(theme, type)}
+    ${getType(theme, $type)}
 
     span {
       flex: 1;
@@ -124,7 +124,7 @@ const Toast = ({ toast, duration }: { toast: IToast; duration: number }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       exit={{ opacity: 0, y: "-100%" }}
-      type={type}
+      $type={type}
       aria-live="polite"
       aria-atomic={true}
     >

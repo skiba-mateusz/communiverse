@@ -8,22 +8,20 @@ import { Link } from "react-router-dom";
 type Variants = "filled" | "soft" | "outlined" | "transparent";
 type ButtonSizes = Sizes | "icon";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: ButtonSizes;
-  variant?: Variants;
-  full?: boolean;
+interface ButtonStyles {
+  $size?: ButtonSizes;
+  $variant?: Variants;
+  $full?: boolean;
+  $styles?: Styles;
+}
+
+interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    ButtonStyles {
   isLoading?: boolean;
   disabled?: boolean;
   onClick?: () => void;
   to?: string;
-  styles?: Styles;
-}
-
-interface StylesProps {
-  size: ButtonSizes;
-  variant: Variants;
-  full: boolean;
-  styles?: Styles;
 }
 
 export const getVariant = (theme: any, variant: Variants) => {
@@ -87,8 +85,14 @@ export const getSize = (theme: any, size: ButtonSizes) => {
   }
 };
 
-const styles = css<StylesProps>`
-  ${({ theme, variant, size, full, styles }) => css`
+const styles = css<ButtonStyles>`
+  ${({
+    theme,
+    $variant = "filled",
+    $size = "medium",
+    $full = false,
+    $styles,
+  }) => css`
     padding-block: ${theme.spacing(2)};
     display: flex;
     align-items: center;
@@ -107,31 +111,31 @@ const styles = css<StylesProps>`
       transform: scale(0.98);
     }
 
-    ${getVariant(theme, variant)}
-    ${getSize(theme, size)}
-    ${full ? "width: 100%;" : ""}
+    ${getVariant(theme, $variant)}
+    ${getSize(theme, $size)}
+    ${$full ? "width: 100%;" : ""}
 
-    ${parseStyles({ ...styles }, theme)}
+    ${parseStyles({ ...$styles }, theme)}
   `}
 `;
 
-const StyledLink = styled(Link)<StylesProps>`
+const StyledLink = styled(Link)<ButtonStyles>`
   ${styles}
 `;
 
-const StyledButton = styled.button<StylesProps>`
+const StyledButton = styled.button<ButtonStyles>`
   ${styles}
 `;
 
 export const Button = ({
-  size = "medium",
-  variant = "filled",
-  full = false,
+  $size,
+  $variant,
+  $full,
+  $styles,
   isLoading = false,
   disabled = false,
   onClick,
   to,
-  styles,
   children,
   ...restProps
 }: ButtonProps) => {
@@ -144,16 +148,16 @@ export const Button = ({
 
   return (
     <Component
-      size={size}
-      variant={variant}
-      full={full}
+      $size={$size}
+      $variant={$variant}
+      $full={$full}
       onClick={!to ? handleClick : undefined}
       disabled={!to && (disabled || isLoading)}
       to={to}
       styles={styles}
       {...restProps}
     >
-      {isLoading ? <Loader styles={{ padding: 0 }} /> : children}
+      {isLoading ? <Loader $styles={{ padding: 0 }} /> : children}
     </Component>
   );
 };

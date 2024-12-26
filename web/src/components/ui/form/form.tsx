@@ -11,18 +11,22 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { parseStyles } from "@/utils/styles";
 import { Styles } from "@/types/styles";
 
-interface FormProps<TFormValues extends FieldValues>
-  extends React.PropsWithChildren {
-  onSubmit: SubmitHandler<TFormValues>;
-  schema: yup.AnyObjectSchema;
-  styles?: Styles;
+interface FormStyles {
+  $styles?: Styles;
 }
 
-const StyledForm = styled.form<{ styles?: Styles }>`
-  ${({ theme, styles }) => css`
+interface FormProps<TFormValues extends FieldValues>
+  extends React.PropsWithChildren,
+    FormStyles {
+  onSubmit: SubmitHandler<TFormValues>;
+  schema: yup.AnyObjectSchema;
+}
+
+const StyledForm = styled.form<FormStyles>`
+  ${({ theme, $styles }) => css`
     display: grid;
     gap: ${theme.spacing(2)};
-    ${parseStyles({ ...styles })}
+    ${parseStyles({ ...$styles }, theme)}
 
     & > button {
       margin-top: ${theme.spacing(4)};
@@ -31,19 +35,21 @@ const StyledForm = styled.form<{ styles?: Styles }>`
 `;
 
 export const Form = <TFormValues extends Record<string, any>>({
+  $styles,
   onSubmit,
   schema,
   children,
-  styles,
+  ...restProps
 }: FormProps<TFormValues>) => {
   const methods = useForm<TFormValues>({ resolver: yupResolver(schema) });
 
   return (
     <FormProvider {...methods}>
       <StyledForm
+        $styles={$styles}
         onSubmit={methods.handleSubmit(onSubmit)}
-        styles={styles}
         noValidate
+        {...restProps}
       >
         {children}
       </StyledForm>

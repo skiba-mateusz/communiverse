@@ -1,13 +1,12 @@
 import { useState } from "react";
 import styled, { css } from "styled-components";
 import { AiFillCaretDown, AiOutlineTeam, AiFillCaretUp } from "react-icons/ai";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/ui/link";
 import { useCurrentUserCommunities } from "../api/get-current-user-communities";
 import { Message } from "@/components/ui/message";
 import { Loader } from "@/components/ui/loader";
-import { getAxiosErrorMessage } from "@/utils/errors";
 
 const StyledCommunitiesMenu = styled.div`
   ${({ theme }) => css`
@@ -47,7 +46,7 @@ export const CommunitiesMenu = () => {
 
   if (error) {
     return (
-      <Message variant="alert">
+      <Message $variant="alert">
         There was an error trying to display your communities
       </Message>
     );
@@ -56,13 +55,13 @@ export const CommunitiesMenu = () => {
   return (
     <StyledCommunitiesMenu>
       <MenuHeader>
-        <MenuTitle to="/app/communities">
+        <MenuTitle to="/app/communities" end>
           <AiOutlineTeam />
           <span>Communities</span>
         </MenuTitle>
         <Button
-          size="icon"
-          variant="transparent"
+          $size="icon"
+          $variant="transparent"
           onClick={() => setIsExpanded((prev) => !prev)}
           aria-haspopup="menu"
           aria-label={
@@ -83,14 +82,17 @@ export const CommunitiesMenu = () => {
           {isLoading ? (
             <Loader />
           ) : (
-            communities?.map((community) => (
-              <li role="presentation">
-                <NavLink to="/app/communities/sample" role="menuitem" end>
-                  <Avatar
-                    size="small"
-                    src={community.thumbnailURL || "/community.svg"}
-                    name={community.name}
-                  />
+            communities?.map(({ name, slug, thumbnailURL }) => (
+              <li role="presentation" key={slug}>
+                <NavLink to={`/app/communities/${slug}`} role="menuitem">
+                  <Avatar>
+                    <AvatarImage
+                      src={thumbnailURL}
+                      fallback={name}
+                      alt={`${name}'s avatar`}
+                    />
+                  </Avatar>
+                  {name}
                 </NavLink>
               </li>
             ))

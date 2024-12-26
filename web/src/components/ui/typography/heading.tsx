@@ -3,13 +3,15 @@ import styled, { css } from "styled-components";
 import { parseStyles } from "@/utils/styles";
 import { Styles } from "@/types/styles";
 
-interface HeadingProps extends React.PropsWithChildren {
+interface HeadingStyles {
   as: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-  underlined?: boolean;
-  styles?: Styles;
+  $underlined?: boolean;
+  $styles?: Styles;
 }
 
-const getFontSize = (theme: any, as: HeadingProps["as"]) => {
+interface HeadingProps extends React.PropsWithChildren, HeadingStyles {}
+
+const getFontSize = (theme: any, as: HeadingStyles["as"]) => {
   switch (as) {
     case "h1":
       return css`
@@ -52,15 +54,15 @@ const getFontSize = (theme: any, as: HeadingProps["as"]) => {
   }
 };
 
-export const Heading = styled.h1<HeadingProps>`
-  ${({ theme, as, underlined = false, styles }) => css`
+export const StyledHeading = styled.h1<HeadingStyles>`
+  ${({ theme, as, $underlined = false, $styles }) => css`
     position: relative;
-    padding-bottom: 0.2em;
     ${getFontSize(theme, as)};
     line-height: 1.25;
 
-    ${underlined
+    ${$underlined
       ? css`
+          padding-bottom: 0.2em;
           &::before,
           &::after {
             content: "";
@@ -84,8 +86,25 @@ export const Heading = styled.h1<HeadingProps>`
         `
       : ""}
 
-    ${parseStyles({ ...styles }, theme)}
+    ${parseStyles({ ...$styles }, theme)}
   `}
 `;
 
-Heading.displayName = "Heading";
+export const Heading = ({
+  $styles,
+  $underlined,
+  as,
+  children,
+  ...restProps
+}: HeadingProps) => {
+  return (
+    <StyledHeading
+      $styles={$styles}
+      $underlined={$underlined}
+      as={as}
+      {...restProps}
+    >
+      {children}
+    </StyledHeading>
+  );
+};

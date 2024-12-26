@@ -22,7 +22,7 @@ export const RegisterForm = () => {
         name="passwordConfirmation"
         label="Password confirmation"
       />
-      <Button isLoading={isPending} full>
+      <Button $full isLoading={isPending}>
         Register
       </Button>
     </Form>

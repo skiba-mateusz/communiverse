@@ -14,6 +14,7 @@ import { CommunityDetails } from "@/features/communities/components/community-de
 import { PostAuthorDetails } from "@/features/posts/components/post-author-details";
 import { formatDate } from "@/utils/time";
 import { PostTags } from "@/features/posts/components/post-card";
+import { Separator } from "@/components/ui/separator";
 
 const StyledMarkdown = styled(Markdown)`
   margin-block: 1rem;
@@ -32,10 +33,10 @@ export const PostRoute = () => {
   const { post, isLoading, error } = usePost();
   const { vote } = useVotePost();
 
-  if (isLoading) return <Loader size="medium" />;
+  if (isLoading) return <Loader $size="medium" />;
   if (error)
     return (
-      <Message variant="alert">There was an error trying to get post</Message>
+      <Message $variant="alert">There was an error trying to get post</Message>
     );
   if (!post) return null;
 
@@ -56,24 +57,25 @@ export const PostRoute = () => {
     <>
       <Head title="Posts" />
       <section>
-        <Container variant="wide">
+        <Container $variant="wide">
           <Grid>
-            <GridItem span={[12, 8, 8]}>
-              <Heading as="h1" underlined styles={{ marginBottom: 4 }}>
+            <GridItem $span={[12, 8, 8]}>
+              <Heading as="h1" $underlined $styles={{ marginBottom: 4 }}>
                 {title}
               </Heading>
               <PostTags tags={tags} />
             </GridItem>
-            <GridItem span={[12, 4, 4]}></GridItem>
+            <GridItem $span={[12, 4, 4]}></GridItem>
           </Grid>
           <Grid>
             <GridItem
-              span={[12, 8, 8]}
-              style={{ display: "flex", flexDirection: "column" }}
+              $span={[12, 8, 8]}
+              $styles={{ display: "flex", flexDirection: "column" }}
             >
               <StyledMarkdown>{content}</StyledMarkdown>
+              <Separator $styles={{ marginBottom: 4 }} />
               <Stack
-                style={{
+                $styles={{
                   justifyContent: "space-between",
                   alignItems: "center",
                 }}
@@ -99,8 +101,11 @@ export const PostRoute = () => {
                 <time>{formatDate(createdAt)}</time>
               </Stack>
             </GridItem>
-            <GridItem span={[12, 4, 4]}>
-              <Stack direction="vertical">
+            <GridItem $span={[12, 4, 4]}>
+              <Stack
+                $direction="vertical"
+                $styles={{ position: "sticky", top: 0 }}
+              >
                 <CommunityDetails community={community} />
                 <PostAuthorDetails author={author} />
               </Stack>

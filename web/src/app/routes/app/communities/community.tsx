@@ -1,5 +1,5 @@
 import { Head } from "@/components/seo";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
 import { Container } from "@/components/ui/container";
 import { Grid, GridItem } from "@/components/ui/grid";
@@ -10,6 +10,7 @@ import { Heading, Typography } from "@/components/ui/typography";
 import { useCommunity } from "@/features/communities/api/get-community";
 import { CommunityButton } from "@/features/communities/components/community-button";
 import { formatDate } from "@/utils/time";
+import { Link } from "react-router-dom";
 
 export const CommunityRoute = () => {
   const { community, isLoading, error } = useCommunity();
@@ -17,7 +18,7 @@ export const CommunityRoute = () => {
   if (isLoading) return <Loader />;
   if (error)
     return (
-      <Message variant="alert">
+      <Message $variant="alert">
         There was an error trying to display community
       </Message>
     );
@@ -38,34 +39,33 @@ export const CommunityRoute = () => {
   return (
     <>
       <Head title="Communities" />
-      <Grid>
-        <GridItem span={[12, 12, 12]}>
-          <section>
-            <Container variant="wide">
-              <Stack
-                styles={{
-                  flexDirection: ["column", "column", "row"],
-                  alignItems: "center",
-                }}
-              >
-                <img
-                  width={400}
-                  height={225}
-                  src={thumbnailURL}
-                  style={{ borderRadius: ".5rem" }}
-                />
-                <Stack
-                  direction="vertical"
-                  styles={{ alignItems: ["center", "center", "start"] }}
-                >
+      <Container $variant="wide">
+        <Grid>
+          <GridItem $span={[12, 8, 8]}>
+            <section>
+              <Typography>TODO: community posts</Typography>
+            </section>
+          </GridItem>
+          <GridItem $span={[12, 4, 4]}>
+            <Box as="section">
+              <Stack $direction="vertical">
+                <Avatar $styles={{ margin: "auto" }}>
+                  <AvatarImage
+                    $size="large"
+                    src={thumbnailURL}
+                    fallback={name}
+                    alt={`${name}'s avatar`}
+                  />
+                </Avatar>
+                <Stack $direction="vertical" $styles={{ textAlign: "center" }}>
                   <div>
-                    <Heading
-                      as="h1"
-                      styles={{ textAlign: ["center", "center", "left"] }}
+                    <Heading as="h1">{name}</Heading>
+                    <Stack
+                      $styles={{
+                        color: "colors.neutral.600",
+                        justifyContent: "center",
+                      }}
                     >
-                      {name}
-                    </Heading>
-                    <Stack styles={{ color: "colors.neutral.600" }}>
                       <span>@{slug}</span>
                       <time>
                         Created{" "}
@@ -76,65 +76,76 @@ export const CommunityRoute = () => {
                       </time>
                     </Stack>
                   </div>
-                  <Stack>
+                  <Stack $styles={{ justifyContent: "center" }}>
                     <div>
-                      <Typography
-                        as="span"
-                        styles={{ fontSize: "font.size.md" }}
-                      >
-                        {numPosts}{" "}
-                      </Typography>
+                      <Typography as="span">{numPosts} </Typography>
                       Posts
                     </div>
                     <div>
-                      <Typography
-                        as="span"
-                        styles={{ fontSize: "font.size.md" }}
-                      >
-                        {numMembers}{" "}
-                      </Typography>
+                      <Typography as="span">{numMembers} </Typography>
                       Members
                     </div>
                   </Stack>
-                  <Stack direction="vertical" spacing={1}>
+                  <Stack
+                    $direction="vertical"
+                    $spacing={1}
+                    $styles={{ alignItems: "center" }}
+                  >
                     <Typography
                       as="span"
-                      styles={{
+                      $styles={{
                         color: "colors.neutral.600",
-                        textAlign: ["center", "center", "left"],
                       }}
                     >
                       Created by
                     </Typography>
-                    <Box styles={{ padding: 2 }}>
-                      <Avatar src={creator.avatarURL} name={creator.name} />
-                    </Box>
+                    <Link to={`/app/users/${creator.username}`}>
+                      <Box
+                        $styles={{
+                          padding: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                        }}
+                      >
+                        <Avatar>
+                          <AvatarImage
+                            src={creator.avatarURL}
+                            fallback={creator.username}
+                            alt={`${creator.username}'s avatar`}
+                          />
+                        </Avatar>
+                        <div>
+                          <Typography>{creator.name}</Typography>
+                          <Typography
+                            $styles={{
+                              fontSize: "font.size.xs",
+                              color: "colors.neutral.600",
+                              textAlign: "left",
+                            }}
+                          >
+                            @{creator.username}
+                          </Typography>
+                        </div>
+                      </Box>
+                    </Link>
                   </Stack>
                 </Stack>
               </Stack>
               <Typography
-                styles={{
+                $styles={{
                   marginBlock: 6,
-                  maxWidth: "44ch",
-                  textAlign: ["center", "center", "left"],
-                  marginInline: ["auto", "auto", 0],
+                  textAlign: "center",
                 }}
                 as="p"
               >
                 {description}
               </Typography>
               <CommunityButton role={role} />
-            </Container>
-          </section>
-        </GridItem>
-        <GridItem span={[12, 12, 12]}>
-          <section>
-            <Container variant="narrow">
-              <Typography>TODO: community posts</Typography>
-            </Container>
-          </section>
-        </GridItem>
-      </Grid>
+            </Box>
+          </GridItem>
+        </Grid>
+      </Container>
     </>
   );
 };

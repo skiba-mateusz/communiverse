@@ -1,32 +1,33 @@
-import { Styles } from "@/types/styles";
-import { parseStyles } from "@/utils/styles";
 import React from "react";
 import styled, { css } from "styled-components";
-import { Heading } from "../typography";
+import { Styles } from "@/types/styles";
+import { parseStyles } from "@/utils/styles";
 
-interface CardHeaderProps {
-  title: string;
-  avatar?: React.ReactNode;
-  styles?: Styles;
+interface CardHeaderStyles {
+  $styles?: Styles;
 }
 
-const StyledCardHeader = styled.header<{ styles?: Styles }>`
-  ${({ theme, styles }) => css`
+interface CardHeaderProps extends React.PropsWithChildren, CardHeaderStyles {}
+
+const StyledCardHeader = styled.header<CardHeaderStyles>`
+  ${({ theme, $styles }) => css`
     padding: ${theme.spacing(4)};
-    ${parseStyles({ ...styles }, theme)}
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing(4)};
+    flex-wrap: wrap;
+    ${parseStyles({ ...$styles }, theme)};
   `}
 `;
 
 export const CardHeader = ({
-  title,
-  avatar,
-  styles,
+  $styles,
+  children,
   ...restProps
 }: CardHeaderProps) => {
   return (
-    <StyledCardHeader styles={styles} {...restProps}>
-      {avatar}
-      <Heading as="h3">{title}</Heading>
+    <StyledCardHeader $styles={$styles} {...restProps}>
+      {children}
     </StyledCardHeader>
   );
 };

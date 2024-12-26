@@ -17,24 +17,26 @@ const sizes = {
   `,
 };
 
-interface LoaderProps {
-  size?: Sizes;
-  styles?: Styles;
+interface LoaderStyles {
+  $size?: Sizes;
+  $styles?: Styles;
 }
 
-const StyledLoader = styled.div<Omit<LoaderProps, "size">>`
-  ${({ theme, styles }) => css`
+interface LoaderProps extends LoaderStyles {}
+
+const StyledLoader = styled.div<Omit<LoaderStyles, "size">>`
+  ${({ theme, $styles }) => css`
     padding: ${theme.spacing(4)};
     display: flex;
     justify-self: center;
     gap: ${theme.spacing(3)};
-    ${parseStyles({ ...styles }, theme)}
+    ${parseStyles({ ...$styles }, theme)}
   `}
 `;
 
-const Circle = styled.div<Omit<LoaderProps, "styles">>`
-  ${({ theme, size }) => css`
-    ${sizes[size || "small"]}
+const Circle = styled.div<Omit<LoaderStyles, "styles">>`
+  ${({ theme, $size = "small" }) => css`
+    ${sizes[$size]}
     border-radius: 100%;
     background-color: ${theme.colors.neutral[400]};
     animation: beat 750ms ease-in-out infinite;
@@ -63,11 +65,11 @@ const Circle = styled.div<Omit<LoaderProps, "styles">>`
   `}
 `;
 
-export const Loader = ({ size = "small", styles }: LoaderProps) => {
+export const Loader = ({ $size, $styles }: LoaderProps) => {
   return (
-    <StyledLoader styles={styles} aria-label="loading">
+    <StyledLoader $styles={$styles} aria-label="loading">
       {Array.from({ length: 3 }, (_, i) => (
-        <Circle size={size} key={i} />
+        <Circle $size={$size} key={i} />
       ))}
     </StyledLoader>
   );

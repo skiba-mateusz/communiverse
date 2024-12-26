@@ -32,10 +32,10 @@ export const PasswordInput = ({
       }
       andorment={
         <Button
+          $variant="transparent"
+          $styles={{ padding: 0 }}
           type="button"
-          variant="transparent"
           onClick={() => setIsVisible((visible) => !visible)}
-          styles={{ padding: 0 }}
           aria-label="Toggle password visibility"
         >
           {isVisible ? <AiFillEye /> : <AiFillEyeInvisible />}

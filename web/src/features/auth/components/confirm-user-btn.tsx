@@ -5,7 +5,7 @@ export const ConfirmUserBtn = () => {
   const { confirmUser, isPending } = useConfirmUser();
 
   return (
-    <Button onClick={confirmUser} isLoading={isPending} full>
+    <Button $full onClick={confirmUser} isLoading={isPending}>
       Activate Account
     </Button>
   );

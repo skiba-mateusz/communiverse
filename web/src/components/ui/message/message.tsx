@@ -1,12 +1,17 @@
+import React from "react";
+import styled, { css } from "styled-components";
 import { Styles } from "@/types/styles";
 import { parseStyles } from "@/utils/styles";
-import styled, { css } from "styled-components";
 
 type Variant = "alert" | "status";
 
-interface MessageProps extends React.PropsWithChildren {
-  variant: Variant;
-  styles?: Styles;
+interface MessageStyles {
+  $variant: Variant;
+  $styles?: Styles;
+}
+
+interface MessageProps extends React.PropsWithChildren, MessageStyles {
+  as?: React.ElementType;
 }
 
 const variants = (theme: any, variant: Variant) => {
@@ -26,18 +31,30 @@ const variants = (theme: any, variant: Variant) => {
 };
 
 const StyledMessage = styled.p<MessageProps>`
-  ${({ theme, variant, styles }) => css`
+  ${({ theme, $variant, $styles }) => css`
     padding: ${theme.spacing(4)};
     border-radius: ${theme.border.radius.md};
     font-weight: ${theme.font.weight.semi};
-    ${variants(theme, variant)}
-    ${parseStyles({ ...styles }, theme)}
+    ${variants(theme, $variant)}
+    ${parseStyles({ ...$styles }, theme)}
   `}
 `;
 
-export const Message = ({ variant = "status", children }: MessageProps) => {
+export const Message = ({
+  $variant = "status",
+  $styles,
+  as,
+  children,
+  ...restProps
+}: MessageProps) => {
   return (
-    <StyledMessage role={variant} variant={variant}>
+    <StyledMessage
+      $variant={$variant}
+      $styles={$styles}
+      as={as}
+      role={$variant}
+      {...restProps}
+    >
       {children}
     </StyledMessage>
   );

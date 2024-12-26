@@ -49,14 +49,17 @@ const GlobalStyle = createGlobalStyle`
         cursor: not-allowed;
       }
 
-      p,
+      p {
+        overflow-wrap: break-word;
+      }
+
       h1,
       h2,
       h3,
       h4,
       h5,
       h6 {
-        overflow-wrap: break-word;
+        color: ${theme.colors.neutral[950]};
       }
 
       ul,

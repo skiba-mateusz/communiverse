@@ -1,4 +1,5 @@
 import { css } from "styled-components";
+import { SHA256 } from "crypto-js";
 import { darkTheme } from "@/theme";
 import { getNestedValue } from "./objects";
 
@@ -57,4 +58,9 @@ export const parseStyles = (styles: Record<string, any>, theme: any) => {
   return Object.entries(styles).map(([property, value]) =>
     responsive(property, value, theme)
   );
+};
+
+export const getColorFromValue = (value: string): string => {
+  const hash = SHA256(value);
+  return `#${hash.toString().slice(0, 6)}`;
 };

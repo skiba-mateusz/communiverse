@@ -12,7 +12,7 @@ export const PostsView = () => {
 
   if (error) {
     return (
-      <Message variant="alert">
+      <Message $variant="alert">
         There was an error trying to display posts
       </Message>
     );

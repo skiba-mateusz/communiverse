@@ -2,6 +2,7 @@ import styled, { css } from "styled-components";
 import { AiFillHome, AiOutlineGlobal, AiOutlineTeam } from "react-icons/ai";
 import { CommunitiesMenu } from "@/features/communities/components/communities-menu";
 import { NavLink } from "../ui/link";
+import { Separator } from "../ui/separator";
 
 const StyledSidebar = styled.aside`
   ${({ theme }) => css`
@@ -56,6 +57,7 @@ export const Sidebar = () => {
               <span>Communities</span>
             </NavLink>
           </li>
+          <Separator $styles={{ marginBlock: 4 }} />
           <li>
             <CommunitiesMenu />
           </li>
