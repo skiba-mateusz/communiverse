@@ -1,8 +1,6 @@
 import styled, { css } from "styled-components";
 import { AiFillLike, AiFillDislike } from "react-icons/ai";
-import { useState } from "react";
 import { VoteValue } from "@/types/api";
-import { Loader } from "../loader";
 
 interface VotesProps {
   initialVotes: number;
@@ -20,8 +18,8 @@ const StyledVotes = styled.div`
   `}
 `;
 
-const UpvoteButton = styled.button<{ isActive: boolean }>`
-  ${({ theme, isActive }) => css`
+const UpvoteButton = styled.button<{ $isActive: boolean }>`
+  ${({ theme, $isActive }) => css`
     width: 2.5rem;
     height: 2.5rem;
     display: flex;
@@ -37,12 +35,12 @@ const UpvoteButton = styled.button<{ isActive: boolean }>`
       color: ${theme.colors.green[600]};
     }
 
-    color: ${isActive ? theme.colors.green[600] : "inherit"};
+    color: ${$isActive ? theme.colors.green[600] : "inherit"};
   `}
 `;
 
-const DownvoteButton = styled.button<{ isActive: boolean }>`
-  ${({ theme, isActive }) => css`
+const DownvoteButton = styled.button<{ $isActive: boolean }>`
+  ${({ theme, $isActive }) => css`
     width: 2.5rem;
     height: 2.5rem;
     display: flex;
@@ -58,7 +56,7 @@ const DownvoteButton = styled.button<{ isActive: boolean }>`
       color: ${theme.colors.red[600]};
     }
 
-    color: ${isActive ? theme.colors.red[600] : "inherit"};
+    color: ${$isActive ? theme.colors.red[600] : "inherit"};
   `}
 `;
 
@@ -68,52 +66,25 @@ export const Votes = ({
   onDownvote,
   onUpvote,
 }: VotesProps) => {
-  const [votes, setVotes] = useState(initialVotes);
-  const [userVote, setUserVote] = useState<VoteValue>(initialUserVote);
-
-  const handleUpvote = () => {
-    if (userVote === 1) {
-      setVotes(votes - 1);
-      setUserVote(0);
-      onUpvote?.(0);
-    } else {
-      setVotes(userVote === -1 ? votes + 2 : votes + 1);
-      setUserVote(1);
-      onUpvote?.(1);
-    }
-  };
-
-  const handleDownvote = () => {
-    if (userVote === -1) {
-      setVotes(votes + 1);
-      setUserVote(0);
-      onDownvote?.(0);
-    } else {
-      setVotes(userVote === 1 ? votes - 2 : votes - 1);
-      setUserVote(-1);
-      onDownvote?.(-1);
-    }
-  };
-
-  const isUpvoted = userVote === 1;
-  const isDownvoted = userVote === -1;
+  const isUpvoted = initialUserVote === 1;
+  const isDownvoted = initialUserVote === -1;
 
   return (
     <StyledVotes aria-label="Votes">
       <UpvoteButton
+        $isActive={isUpvoted}
         aria-label="Upvote"
-        onClick={handleUpvote}
+        onClick={() => onUpvote?.(isUpvoted ? 0 : 1)}
         aria-pressed={isUpvoted}
-        isActive={isUpvoted}
       >
         <AiFillLike />
       </UpvoteButton>
-      <span>{votes}</span>
+      <span>{initialVotes}</span>
       <DownvoteButton
+        $isActive={isDownvoted}
         aria-label="Downvote"
-        onClick={handleDownvote}
+        onClick={() => onDownvote?.(isDownvoted ? 0 : -1)}
         aria-pressed={isDownvoted}
-        isActive={isDownvoted}
       >
         <AiFillDislike />
       </DownvoteButton>

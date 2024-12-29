@@ -12,10 +12,11 @@ export const useCurrentUserFeed = () => {
     data: posts,
     error,
     isLoading,
+    isFetching,
   } = useQuery({
     queryFn: getCurrentUserFeedApi,
-    queryKey: ["feed"],
+    queryKey: ["posts", "feed"],
   });
 
-  return { posts, error, isLoading };
+  return { posts, error, isLoading, isFetching };
 };

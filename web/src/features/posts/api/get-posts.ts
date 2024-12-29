@@ -11,11 +11,12 @@ export const usePosts = () => {
   const {
     data: posts,
     isLoading,
+    isFetching,
     error,
   } = useQuery({
     queryFn: getPostsApi,
-    queryKey: ["posts"],
+    queryKey: ["posts", "all"],
   });
 
-  return { posts, isLoading, error };
+  return { posts, isLoading, isFetching, error };
 };

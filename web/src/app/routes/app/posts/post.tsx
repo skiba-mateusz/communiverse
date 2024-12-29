@@ -8,13 +8,12 @@ import { Loader } from "@/components/ui/loader";
 import { Message } from "@/components/ui/message";
 import { Stack } from "@/components/ui/stack";
 import { Grid, GridItem } from "@/components/ui/grid";
-import { Votes } from "@/components/ui/votes";
-import { useVotePost } from "@/features/posts/api/vote-post";
 import { CommunityDetails } from "@/features/communities/components/community-details";
 import { PostAuthorDetails } from "@/features/posts/components/post-author-details";
 import { formatDate } from "@/utils/time";
 import { PostTags } from "@/features/posts/components/post-card";
 import { Separator } from "@/components/ui/separator";
+import { PostVotes } from "@/features/posts/components/post-votes";
 
 const StyledMarkdown = styled(Markdown)`
   margin-block: 1rem;
@@ -30,10 +29,9 @@ const StyledMarkdown = styled(Markdown)`
 `;
 
 export const PostRoute = () => {
-  const { post, isLoading, error } = usePost();
-  const { vote } = useVotePost();
+  const { post, isLoading, isFetching, error } = usePost();
 
-  if (isLoading) return <Loader $size="medium" />;
+  if (isLoading || isFetching) return <Loader $size="medium" />;
   if (error)
     return (
       <Message $variant="alert">There was an error trying to get post</Message>
@@ -80,23 +78,11 @@ export const PostRoute = () => {
                   alignItems: "center",
                 }}
               >
-                <Votes
-                  initialVotes={votes}
+                <PostVotes
                   initialUserVote={userVote}
-                  onUpvote={(value) =>
-                    vote({
-                      communitySlug,
-                      postSlug,
-                      value,
-                    })
-                  }
-                  onDownvote={(value) =>
-                    vote({
-                      communitySlug,
-                      postSlug,
-                      value,
-                    })
-                  }
+                  initialVotes={votes}
+                  communitySlug={communitySlug}
+                  postSlug={postSlug}
                 />
                 <time>{formatDate(createdAt)}</time>
               </Stack>

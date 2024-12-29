@@ -27,9 +27,11 @@ export const useCommunityMemebership = () => {
       onSuccess: () => {
         success(successMessage);
         queryClient.invalidateQueries({
-          queryKey: ["community", communitySlug],
+          queryKey: ["communities"],
         });
-        queryClient.invalidateQueries({ queryKey: ["user-communities"] });
+        queryClient.invalidateQueries({
+          queryKey: ["posts", "feed"],
+        });
       },
       onError: (err) => {
         error(getAxiosErrorMessage(err));

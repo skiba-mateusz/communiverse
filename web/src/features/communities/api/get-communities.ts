@@ -12,7 +12,10 @@ export const useCommunities = () => {
     data: communities,
     isLoading,
     error,
-  } = useQuery({ queryFn: getCommunitiesApi, queryKey: ["communities"] });
+  } = useQuery({
+    queryFn: getCommunitiesApi,
+    queryKey: ["communities", "all"],
+  });
 
   return { communities, isLoading, error };
 };

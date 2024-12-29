@@ -4,9 +4,9 @@ import { Message } from "@/components/ui/message";
 import { usePosts } from "../api/get-posts";
 
 export const PostsView = () => {
-  const { posts = [], isLoading, error } = usePosts();
+  const { posts = [], isLoading, isFetching, error } = usePosts();
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return <Loader />;
   }
 
@@ -18,5 +18,9 @@ export const PostsView = () => {
     );
   }
 
-  return <PostsList posts={posts} />;
+  return (
+    <>
+      <PostsList posts={posts} />
+    </>
+  );
 };

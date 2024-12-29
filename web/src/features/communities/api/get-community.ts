@@ -22,11 +22,12 @@ export const useCommunity = () => {
   const {
     data: community,
     isLoading,
+    isFetching,
     error,
   } = useQuery({
     queryFn: () => getCommunityApi(communitySlug),
-    queryKey: ["community", communitySlug],
+    queryKey: ["communities", communitySlug],
   });
 
-  return { community, isLoading, error };
+  return { community, isLoading, isFetching, error };
 };

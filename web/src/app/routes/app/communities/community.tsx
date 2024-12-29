@@ -9,16 +9,14 @@ import { Stack } from "@/components/ui/stack";
 import { Heading, Typography } from "@/components/ui/typography";
 import { useCommunity } from "@/features/communities/api/get-community";
 import { CommunityButton } from "@/features/communities/components/community-button";
-import { useCommunityPosts } from "@/features/posts/api/get-community-posts";
 import { CommunityPostsView } from "@/features/posts/components/community-posts-view";
-import { PostsList } from "@/features/posts/components/posts-list";
 import { formatDate } from "@/utils/time";
 import { Link } from "react-router-dom";
 
 export const CommunityRoute = () => {
-  const { community, isLoading, error } = useCommunity();
+  const { community, isLoading, isFetching, error } = useCommunity();
 
-  if (isLoading) return <Loader />;
+  if (isLoading || isFetching) return <Loader />;
   if (error)
     return (
       <Message $variant="alert">

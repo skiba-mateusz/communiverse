@@ -7,7 +7,13 @@ import { ThemeProvider } from "@/contexts/theme-context";
 
 interface AppProviderProps extends React.PropsWithChildren {}
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60,
+    },
+  },
+});
 
 export const AppProvider = ({ children }: AppProviderProps) => {
   return (

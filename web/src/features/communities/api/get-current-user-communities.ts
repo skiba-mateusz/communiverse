@@ -16,7 +16,7 @@ export const useCurrentUserCommunities = () => {
     error,
   } = useQuery({
     queryFn: getCurrentUserCommunitiesApi,
-    queryKey: ["user-communities"],
+    queryKey: ["communities", "user"],
   });
 
   return { communities, isLoading, error };

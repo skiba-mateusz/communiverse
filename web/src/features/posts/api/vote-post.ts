@@ -2,9 +2,9 @@ import { useToasts } from "@/components/ui/toasts";
 import { api } from "@/lib/api-client";
 import { VoteValue } from "@/types/api";
 import { getAxiosErrorMessage } from "@/utils/errors";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface VotePostPayloaad {
+interface VotePostPayload {
   communitySlug: string;
   postSlug: string;
   value: VoteValue;
@@ -14,21 +14,25 @@ const votePostApi = async ({
   communitySlug,
   postSlug,
   value,
-}: VotePostPayloaad) => {
+}: VotePostPayload) => {
   await api.put(
     `${import.meta.env.VITE_API_URL}/v1/communities/${communitySlug}/posts/${postSlug}/vote`,
-    {
-      value,
-    }
+    { value }
   );
 };
 
 export const useVotePost = () => {
+  const queryClient = useQueryClient();
   const { error } = useToasts();
 
   const { mutate: vote, isPending } = useMutation({
     mutationFn: votePostApi,
-    onMutate: () => {},
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["posts"],
+        refetchType: "none",
+      });
+    },
     onError: (err) => {
       error(getAxiosErrorMessage(err));
     },

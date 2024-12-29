@@ -4,9 +4,9 @@ import { Message } from "@/components/ui/message";
 import { useCurrentUserFeed } from "@/features/users/api/get-current-user-feed";
 
 export const FeedView = () => {
-  const { posts = [], isLoading, error } = useCurrentUserFeed();
+  const { posts = [], isLoading, isFetching, error } = useCurrentUserFeed();
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return <Loader />;
   }
 
@@ -18,5 +18,9 @@ export const FeedView = () => {
     );
   }
 
-  return <PostsList posts={posts} />;
+  return (
+    <>
+      <PostsList posts={posts} />
+    </>
+  );
 };

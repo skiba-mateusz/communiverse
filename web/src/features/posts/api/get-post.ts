@@ -1,6 +1,6 @@
 import { api } from "@/lib/api-client";
 import { PostDetails } from "@/types/api";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 interface GetPostParams {
@@ -28,11 +28,12 @@ export const usePost = () => {
   const {
     data: post,
     isLoading,
+    isFetching,
     error,
   } = useQuery({
     queryFn: () => getPostApi({ communitySlug, postSlug }),
     queryKey: ["posts", postSlug],
   });
 
-  return { post, isLoading, error };
+  return { post, isLoading, isFetching, error };
 };

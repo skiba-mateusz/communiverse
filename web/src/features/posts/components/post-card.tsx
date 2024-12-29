@@ -13,9 +13,8 @@ import {
   CardHeader,
   CardLink,
 } from "@/components/ui/card";
-import { Votes } from "@/components/ui/votes";
-import { useVotePost } from "../api/vote-post";
 import { Heading } from "@/components/ui/typography";
+import { PostVotes } from "./post-votes";
 
 interface PostCardProps {
   post: PostSummary;
@@ -58,12 +57,6 @@ export const PostTags = ({ tags }: { tags: string[] }) => {
 };
 
 export const PostCard = ({ post }: PostCardProps) => {
-  const { vote } = useVotePost();
-
-  if (!post) {
-    return null;
-  }
-
   const {
     title,
     content,
@@ -75,11 +68,7 @@ export const PostCard = ({ post }: PostCardProps) => {
     community,
     author,
   } = post;
-  const {
-    name: communityName,
-    slug: communitySlug,
-    thumbnailURL = "/thumbnail.svg",
-  } = community;
+  const { name: communityName, slug: communitySlug, thumbnailURL } = community;
   const { username, avatarURL } = author;
 
   const truncatedContent = content.split(" ").slice(0, 35).join(" ");
@@ -127,23 +116,11 @@ export const PostCard = ({ post }: PostCardProps) => {
         </Stack>
       </CardContent>
       <CardActions>
-        <Votes
+        <PostVotes
           initialVotes={votes}
           initialUserVote={userVote}
-          onUpvote={(value) =>
-            vote({
-              communitySlug,
-              postSlug,
-              value,
-            })
-          }
-          onDownvote={(value) =>
-            vote({
-              communitySlug,
-              postSlug,
-              value,
-            })
-          }
+          postSlug={postSlug}
+          communitySlug={communitySlug}
         />
         <Button
           $variant="transparent"
