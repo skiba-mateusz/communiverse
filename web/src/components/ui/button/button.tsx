@@ -151,10 +151,10 @@ export const Button = ({
       $size={$size}
       $variant={$variant}
       $full={$full}
+      $styles={$styles}
       onClick={!to ? handleClick : undefined}
       disabled={!to && (disabled || isLoading)}
       to={to}
-      styles={styles}
       {...restProps}
     >
       {isLoading ? <Loader $styles={{ padding: 0 }} /> : children}

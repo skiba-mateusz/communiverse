@@ -2,7 +2,7 @@ import React from "react";
 import styled, { css } from "styled-components";
 import { useFormContext } from "react-hook-form";
 
-const InputWrapper = styled.div`
+export const FieldWrapper = styled.div`
   position: relative;
 `;
 
@@ -26,7 +26,7 @@ const StyledInput = styled.input`
   `}
 `;
 
-const LabelWrapper = styled.div`
+export const LabelWrapper = styled.div`
   ${({ theme }) => css`
     display: flex;
     justify-content: space-between;
@@ -42,7 +42,7 @@ const AndormentWrapper = styled.div`
   overflow: hidden;
 `;
 
-const ErrorMessage = styled.p`
+export const ErrorMessage = styled.p`
   ${({ theme }) => css`
     color: ${theme.colors.red[600]};
     font-size: ${theme.font.size.xs};
@@ -79,7 +79,7 @@ export const Input = ({
         <label htmlFor={name}>{label}</label>
         {action}
       </LabelWrapper>
-      <InputWrapper>
+      <FieldWrapper>
         <StyledInput
           id={name}
           placeholder={placeholder}
@@ -88,7 +88,7 @@ export const Input = ({
           {...register(name)}
         />
         {andorment ? <AndormentWrapper>{andorment}</AndormentWrapper> : null}
-      </InputWrapper>
+      </FieldWrapper>
       {isError ? (
         <ErrorMessage role="alert">
           {errors[name]?.message as string}

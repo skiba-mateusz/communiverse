@@ -14,19 +14,7 @@ import { formatDate } from "@/utils/time";
 import { PostTags } from "@/features/posts/components/post-card";
 import { Separator } from "@/components/ui/separator";
 import { PostVotes } from "@/features/posts/components/post-votes";
-
-const StyledMarkdown = styled(Markdown)`
-  margin-block: 1rem;
-  flex: 1;
-  * {
-    margin-bottom: 1em;
-    text-align: justify;
-  }
-  pre {
-    scrollbar-width: thin;
-    overflow-x: auto;
-  }
-`;
+import { PostMarkdown } from "@/features/posts/components/post-markdown";
 
 export const PostRoute = () => {
   const { post, isLoading, isFetching, error } = usePost();
@@ -70,7 +58,7 @@ export const PostRoute = () => {
               $span={[12, 8, 8]}
               $styles={{ display: "flex", flexDirection: "column" }}
             >
-              <StyledMarkdown>{content}</StyledMarkdown>
+              <PostMarkdown markdown={content} />
               <Separator $styles={{ marginBottom: 4 }} />
               <Stack
                 $styles={{

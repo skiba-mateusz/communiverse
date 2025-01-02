@@ -1,6 +1,7 @@
 import { Head } from "@/components/seo";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Box } from "@/components/ui/box";
+import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Grid, GridItem } from "@/components/ui/grid";
 import { Loader } from "@/components/ui/loader";
@@ -149,7 +150,16 @@ export const CommunityRoute = () => {
               >
                 {description}
               </Typography>
-              <CommunityButton role={role} />
+              <Stack>
+                <Button
+                  $full
+                  $variant="outlined"
+                  to={`/app/communities/${slug}/create`}
+                >
+                  New Post
+                </Button>
+                <CommunityButton role={role} />
+              </Stack>
             </Box>
           </GridItem>
         </Grid>
