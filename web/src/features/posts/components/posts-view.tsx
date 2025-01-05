@@ -2,13 +2,10 @@ import { Loader } from "@/components/ui/loader";
 import { PostsList } from "./posts-list";
 import { Message } from "@/components/ui/message";
 import { usePosts } from "../api/get-posts";
+import { PostFilters } from "./post-filters";
 
 export const PostsView = () => {
   const { posts = [], isLoading, isFetching, error } = usePosts();
-
-  if (isLoading || isFetching) {
-    return <Loader />;
-  }
 
   if (error) {
     return (
@@ -20,7 +17,8 @@ export const PostsView = () => {
 
   return (
     <>
-      <PostsList posts={posts} />
+      <PostFilters />
+      {isLoading || isFetching ? <Loader /> : <PostsList posts={posts} />}
     </>
   );
 };

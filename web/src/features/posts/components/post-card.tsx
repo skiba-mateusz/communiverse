@@ -1,6 +1,5 @@
 import { Link as RouterLink } from "react-router-dom";
 import styled, { css } from "styled-components";
-import Markdown from "react-markdown";
 import { BiCommentDetail } from "react-icons/bi";
 import { PostSummary } from "@/types/api";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/typography";
 import { PostVotes } from "./post-votes";
+import { PostMarkdown } from "./post-markdown";
 
 interface PostCardProps {
   post: PostSummary;
@@ -71,7 +71,7 @@ export const PostCard = ({ post }: PostCardProps) => {
   const { name: communityName, slug: communitySlug, thumbnailURL } = community;
   const { username, avatarURL } = author;
 
-  const truncatedContent = content.split(" ").slice(0, 35).join(" ");
+  const truncatedContent = content.split(" ").slice(0, 50).join(" ");
 
   return (
     <Card>
@@ -111,7 +111,7 @@ export const PostCard = ({ post }: PostCardProps) => {
         <Stack $spacing={2} $direction="vertical">
           <PostTags tags={tags} />
           <ContentOverlay>
-            <Markdown>{truncatedContent + "..."}</Markdown>
+            <PostMarkdown markdown={truncatedContent} />
           </ContentOverlay>
         </Stack>
       </CardContent>

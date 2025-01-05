@@ -2,13 +2,10 @@ import { Loader } from "@/components/ui/loader";
 import { PostsList } from "./posts-list";
 import { Message } from "@/components/ui/message";
 import { useCommunityPosts } from "../api/get-community-posts";
+import { PostFilters } from "./post-filters";
 
 export const CommunityPostsView = () => {
-  const { posts = [], isLoading, error } = useCommunityPosts();
-
-  if (isLoading) {
-    return <Loader />;
-  }
+  const { posts = [], isLoading, isFetching, error } = useCommunityPosts();
 
   if (error) {
     return (
@@ -18,5 +15,10 @@ export const CommunityPostsView = () => {
     );
   }
 
-  return <PostsList posts={posts} />;
+  return (
+    <>
+      <PostFilters />
+      {isLoading || isFetching ? <Loader /> : <PostsList posts={posts} />}
+    </>
+  );
 };
