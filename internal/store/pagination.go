@@ -9,7 +9,17 @@ type PaginatedPostsQuery struct {
 	Search string `json:"search" validate:"max=100"`
 	Limit  int    `json:"limit" validate:"gte=1,lte=20"`
 	Offset int    `json:"offset" validate:"gte=0"`
-	Sort   string `json:"sort" validate:"oneof=asc desc"`
+	Time string `json:"time" validate:"oneof=today week month year all-time"`
+	View   string `json:"view" validate:"oneof=top discussed latest"`
+	Sort string `json:"sort" validate:"oneof=asc desc"`
+}
+
+type Meta struct {
+	TotalCount int `json:"totalCount"`
+	TotalPages int `json:"totalPages"`
+	CurrentPage int `json:"currentPage"`
+	Offset int `json:"offset"`
+	Limit int `json:"limit"`
 }
 
 func (pq PaginatedPostsQuery) Parse(r *http.Request) (PaginatedPostsQuery, error) {
@@ -36,6 +46,16 @@ func (pq PaginatedPostsQuery) Parse(r *http.Request) (PaginatedPostsQuery, error
 			return pq, err
 		}
 		pq.Offset = o
+	}
+
+	time := qs.Get("time")
+	if time != "" {
+		pq.Time = time
+	}
+
+	view := qs.Get("view")
+	if view != "" {
+		pq.View = view
 	}
 
 	sort := qs.Get("sort")

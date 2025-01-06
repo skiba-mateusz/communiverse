@@ -1,8 +1,12 @@
 import { useSearchParams } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Stack } from "@/components/ui/stack";
+import { PostTime, PostView } from "@/types/api";
 
-const filters = [
+const filters: {
+  view: PostView;
+  times: PostTime[];
+}[] = [
   {
     view: "top",
     times: ["today", "week", "month", "year", "all-time"],

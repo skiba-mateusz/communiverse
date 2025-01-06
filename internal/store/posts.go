@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 )
@@ -206,15 +208,15 @@ func (s *PostStore) Update(ctx context.Context, post *PostDetails) error {
 	return nil
 }
 
-func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
+func (s *PostStore) GetCommunityPosts(ctx context.Context, communityID, userID int64, q PaginatedPostsQuery) ([]PostSummary, Meta, error) {
 	return s.fetchPosts(ctx, userID, &communityID, q, false)
 }
 
-func (s *PostStore) GetAll(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
+func (s *PostStore) GetAll(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, Meta, error) {
 	return s.fetchPosts(ctx, userID, nil, q, false)
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, error) {
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, q PaginatedPostsQuery) ([]PostSummary, Meta, error) {
 	return s.fetchPosts(ctx, userID, nil, q, true)
 }
 
@@ -237,15 +239,17 @@ func (s *PostStore) Vote(ctx context.Context, value int, postID, userID int64) e
 	return nil
 }
 
-func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *int64, q PaginatedPostsQuery, isFeed bool) ([]PostSummary, error) {
-	baseQuery := `
+func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *int64, q PaginatedPostsQuery, isFeed bool) ([]PostSummary, Meta, error) {
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString(`
 		SELECT 
 			p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,
 			c.id, c.name, c.slug, c.thumbnail_id,
 			u.id, u.name, u.username, u.avatar_id,
 			COALESCE(COUNT(cm.id), 0) AS num_comments,
 			COALESCE(tv.total_votes, 0) AS votes,
-			COALESCE(uv.user_vote, 0) AS user_vote
+			COALESCE(uv.user_vote, 0) AS user_vote,
+			COUNT(*) OVER() AS total
 		FROM 
 			posts p
 		INNER JOIN 
@@ -262,56 +266,66 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 		    (SELECT post_id, value AS user_vote FROM post_votes WHERE user_id = $1) uv ON uv.post_id = p.id
 		WHERE 
 			(p.title ILIKE '%' || $2 || '%' OR p.content ILIKE '%' || $2 || '%')
-	`
+	`)
 
-	var args []any
+	args := []any{userID, q.Search}
+
+	timeMap := map[string]string{
+		"today": "1 day",
+		"week": "1 week",
+		"month": "1 month",
+		"year": "1 year",
+	}
+	if timeInterval, ok := timeMap[q.Time]; ok {
+		queryBuilder.WriteString(`
+			AND (p.created_at >= NOW() - INTERVAL '`+  timeInterval +`')
+		`)
+	}
 
 	if communityID != nil {
-		baseQuery += `
+		queryBuilder.WriteString(`
 			AND c.id = $3
-			GROUP BY 
-		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
-		    	c.id, c.name, c.description, c.slug, c.user_id, 
-		    	u.id, u.name, u.username, u.bio,
-		    	tv.total_votes, uv.user_vote
-			ORDER BY p.created_at ` + q.Sort + `
-			LIMIT $4 OFFSET $5
-		`
-		args = append(args, userID, q.Search, *communityID, q.Limit, q.Offset)
-	} else {
-		args = append(args, userID, q.Search, q.Limit, q.Offset)
-		if isFeed {
-			baseQuery += `
-			AND uc.user_id IS NOT NULL
-			GROUP BY 
-		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
-		    	c.id, c.name, c.description, c.slug, c.user_id, 
-		    	u.id, u.name, u.username, u.bio,
-		    	tv.total_votes, uv.user_vote
-			ORDER BY p.created_at ` + q.Sort + `
-			LIMIT $3 OFFSET $4
-		`
-		} else {
-			baseQuery += `
-			GROUP BY 
-		    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
-		    	c.id, c.name, c.description, c.slug, c.user_id, 
-		    	u.id, u.name, u.username, u.bio,
-		    	uc.user_id, tv.total_votes, uv.user_vote
-			ORDER BY p.created_at ` + q.Sort + `
-			LIMIT $3 OFFSET $4
-		`
-		}
+		`)
+		args = append(args, *communityID)
 	}
+
+	if isFeed {
+		queryBuilder.WriteString(`
+			AND uc.user_id IS NOT NULL
+		`)
+	} 
+
+	queryBuilder.WriteString(`
+		GROUP BY 
+	    	p.id, p.title, p.content, p.tags, p.slug, p.user_id, p.community_id, p.created_at,  
+	    	c.id, c.name, c.slug, c.thumbnail_id, 
+	    	u.id, u.name, u.username, u.avatar_id,
+			tv.total_votes, uv.user_vote
+	`)
+
+	viewFields := map[string]string{
+		"latest": "p.created_at",
+		"top": "votes",
+		"discussed": "num_comments",
+	}
+	if viewField, ok := viewFields[q.View]; ok {
+		queryBuilder.WriteString(`
+			ORDER BY ` + viewField + ` ` + q.Sort + ` 
+		`)
+	}
+
+	queryBuilder.WriteString(`LIMIT $` + fmt.Sprint(len(args) + 1) + ` OFFSET $` + fmt.Sprint(len(args) + 2))
+	args = append(args, q.Limit, q.Offset)
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
 	posts := []PostSummary{}
+	var totalCount int
 
-	rows, err := s.db.QueryContext(ctx, baseQuery, args...)
+	rows, err := s.db.QueryContext(ctx, queryBuilder.String(), args...)
 	if err != nil {
-		return posts, err
+		return posts, Meta{}, err
 	}
 
 	for rows.Next() {
@@ -337,16 +351,25 @@ func (s *PostStore) fetchPosts(ctx context.Context, userID int64, communityID *i
 			&post.NumComments,
 			&post.Votes,
 			&post.UserVote,
+			&totalCount,
 		); err != nil {
-			return posts, err
+			return posts, Meta{}, err
 		}
 
 		posts = append(posts, post)
 	}
 
 	if err = rows.Err(); err != nil {
-		return posts, err
+		return posts, Meta{}, err
 	}
 
-	return posts, nil
+	meta := Meta{
+		TotalCount: totalCount,
+		TotalPages: (totalCount + q.Limit - 1) / q.Limit,
+		CurrentPage: q.Offset / q.Limit + 1,
+		Offset: q.Offset,
+		Limit: q.Limit,
+	}
+
+	return posts, meta, nil
 }

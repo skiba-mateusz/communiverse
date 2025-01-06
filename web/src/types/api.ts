@@ -79,3 +79,26 @@ export interface PostDetails extends BasePost {
   community: CommunitySummary;
   author: UserSummary;
 }
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  meta: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+export type PostView = "top" | "discussed" | "latest";
+export type PostTime = "today" | "week" | "month" | "year" | "all-time";
+
+export interface GetPostsParams {
+  view: PostView;
+  time: PostTime;
+  offset: number;
+  limit: number;
+  search?: string;
+  sort?: "asc" | "desc";
+}

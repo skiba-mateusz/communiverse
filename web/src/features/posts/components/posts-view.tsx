@@ -5,7 +5,15 @@ import { usePosts } from "../api/get-posts";
 import { PostFilters } from "./post-filters";
 
 export const PostsView = () => {
-  const { posts = [], isLoading, isFetching, error } = usePosts();
+  const {
+    posts,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isFetching,
+    lastElementRef,
+    error,
+  } = usePosts();
 
   if (error) {
     return (
@@ -18,7 +26,15 @@ export const PostsView = () => {
   return (
     <>
       <PostFilters />
-      {isLoading || isFetching ? <Loader /> : <PostsList posts={posts} />}
+      {isLoading || (isFetching && !isFetchingNextPage) ? (
+        <Loader />
+      ) : (
+        <>
+          <PostsList posts={posts} />
+          {isFetchingNextPage ? <Loader /> : null}
+          {hasNextPage ? <div ref={lastElementRef}></div> : null}
+        </>
+      )}
     </>
   );
 };

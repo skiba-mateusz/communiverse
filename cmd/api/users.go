@@ -20,7 +20,9 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 	query := store.PaginatedPostsQuery{
 		Limit:  10,
 		Offset: 0,
-		Sort:   "desc",
+		Time: "all-time",
+		View:   "newest",
+		Sort: "desc",
 	}
 
 	query, err := query.Parse(r)
@@ -37,7 +39,7 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 	user := getUserFromContext(r)
 	ctx := r.Context()
 
-	posts, err := app.store.Posts.GetUserFeed(ctx, user.ID, query)
+	posts, meta, err := app.store.Posts.GetUserFeed(ctx, user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -48,7 +50,12 @@ func (app *application) getCurrentUserFeedHandler(w http.ResponseWriter, r *http
 		posts[i].Community.ThumbnailURL = app.generateAssetURL(posts[i].Community.ThumbnailID, "thumbnails")
 	}
 
-	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
+	response := PaginatedPostsResponse{
+		Items: posts,
+		Meta: meta,
+	}
+
+	if err = jsonResponse(w, http.StatusOK, response); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

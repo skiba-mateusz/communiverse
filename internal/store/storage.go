@@ -28,9 +28,9 @@ type Storage struct {
 		GetBySlug(context.Context, string, int64) (*PostDetails, error)
 		Delete(context.Context, int64) error
 		Update(context.Context, *PostDetails) error
-		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]PostSummary, error)
-		GetAll(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, error)
-		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, error)
+		GetCommunityPosts(context.Context, int64, int64, PaginatedPostsQuery) ([]PostSummary, Meta, error)
+		GetAll(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, Meta, error)
+		GetUserFeed(context.Context, int64, PaginatedPostsQuery) ([]PostSummary, Meta, error)
 		Vote(context.Context, int, int64, int64) error
 	}
 	Comments interface {

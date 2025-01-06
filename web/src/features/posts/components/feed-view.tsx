@@ -5,7 +5,15 @@ import { useCurrentUserFeed } from "@/features/users/api/get-current-user-feed";
 import { PostFilters } from "./post-filters";
 
 export const FeedView = () => {
-  const { posts = [], isLoading, isFetching, error } = useCurrentUserFeed();
+  const {
+    posts,
+    hasNextPage,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    lastElementRef,
+    error,
+  } = useCurrentUserFeed();
 
   if (error) {
     return (
@@ -18,7 +26,15 @@ export const FeedView = () => {
   return (
     <>
       <PostFilters />
-      {isLoading || isFetching ? <Loader /> : <PostsList posts={posts} />}
+      {isLoading || (isFetching && !isFetchingNextPage) ? (
+        <Loader />
+      ) : (
+        <>
+          <PostsList posts={posts} />
+          {isFetchingNextPage ? <Loader /> : null}
+          {hasNextPage ? <div ref={lastElementRef}></div> : null}
+        </>
+      )}
     </>
   );
 };

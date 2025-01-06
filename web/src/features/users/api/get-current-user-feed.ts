@@ -1,36 +1,68 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { PostSummary } from "@/types/api";
+import {
+  GetPostsParams,
+  PaginatedResponse,
+  PostSummary,
+  PostTime,
+  PostView,
+} from "@/types/api";
 import { useSearchParams } from "react-router-dom";
+import { useRef } from "react";
+import { useObserver } from "@/hooks/use-observer";
 
 const getCurrentUserFeedApi = async ({
   view,
   time,
-}: {
-  view: string;
-  time: string;
-}): Promise<PostSummary[]> => {
+  offset,
+  limit,
+}: GetPostsParams): Promise<PaginatedResponse<PostSummary>> => {
   const res = await api.get(
-    `${import.meta.env.VITE_API_URL}/v1/users/me/feed?view=${view}&time=${time}`
+    `/v1/users/me/feed?view=${view}&time=${time}&offset=${offset}&limit=${limit}`
   );
   return res.data.data;
 };
 
 export const useCurrentUserFeed = () => {
   const [searchParams] = useSearchParams();
+  const lastElementRef = useRef<HTMLDivElement>(null);
 
-  const view = searchParams.get("view") || "latest";
-  const time = searchParams.get("time") || "week";
+  const view = (searchParams.get("view") as PostView) || "latest";
+  const time = (searchParams.get("time") as PostTime) || "week";
 
   const {
-    data: posts,
-    error,
+    data,
+    fetchNextPage,
+    hasNextPage,
     isLoading,
     isFetching,
-  } = useQuery({
-    queryFn: () => getCurrentUserFeedApi({ view, time }),
+    isFetchingNextPage,
+    error,
+  } = useInfiniteQuery({
+    queryFn: ({ pageParam }) =>
+      getCurrentUserFeedApi({ view, time, offset: pageParam, limit: 10 }),
     queryKey: ["posts", "feed", view, time],
+    getNextPageParam: (lastPage) => {
+      const nextOffset = lastPage.meta.offset + lastPage.meta.limit;
+      return nextOffset < lastPage.meta.totalCount ? nextOffset : undefined;
+    },
+    initialPageParam: 0,
   });
 
-  return { posts, error, isLoading, isFetching };
+  useObserver(lastElementRef, fetchNextPage);
+
+  const posts = data?.pages.flatMap((page) => page.items) || [];
+  const meta = data?.pages[0].meta || {};
+
+  return {
+    posts,
+    meta,
+    fetchNextPage,
+    hasNextPage,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    lastElementRef,
+    error,
+  };
 };

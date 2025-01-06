@@ -12,7 +12,7 @@ export const PostsList = ({ posts }: { posts: PostSummary[] }) => {
     <Stack as="ul" $direction="vertical">
       {posts.map((post) => (
         <li>
-          <PostCard post={post} />
+          <PostCard key={post.id} post={post} />
         </li>
       ))}
     </Stack>

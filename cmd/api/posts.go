@@ -149,7 +149,9 @@ func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.
 	query := store.PaginatedPostsQuery{
 		Limit:  10,
 		Offset: 0,
-		Sort:   "desc",
+		Time: "all-time",
+		View:   "newest",
+		Sort: "desc",
 	}
 
 	query, err := query.Parse(r)
@@ -166,7 +168,7 @@ func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.
 	community := getCommunityFromContext(r)
 	user := getUserFromContext(r)
 
-	posts, err := app.store.Posts.GetCommunityPosts(r.Context(), community.ID, user.ID, query)
+	posts, meta, err := app.store.Posts.GetCommunityPosts(r.Context(), community.ID, user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -177,16 +179,28 @@ func (app *application) getCommunityPostsHandler(w http.ResponseWriter, r *http.
 		posts[i].User.AvatarURL = app.generateAssetURL(posts[i].User.AvatarID, "avatars")
 	}
 
-	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
+	response := PaginatedPostsResponse{
+		Items: posts,
+		Meta: meta,
+	}
+
+	if err = jsonResponse(w, http.StatusOK, response); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+type PaginatedPostsResponse struct {
+	Items []store.PostSummary `json:"items"`
+	Meta store.Meta `json:"meta"` 
 }
 
 func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) {
 	query := store.PaginatedPostsQuery{
 		Limit:  10,
 		Offset: 0,
-		Sort:   "desc",
+		Time: "all-time",
+		View:   "creation",
+		Sort: "desc",
 	}
 
 	query, err := query.Parse(r)
@@ -202,7 +216,7 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 
 	user := getUserFromContext(r)
 
-	posts, err := app.store.Posts.GetAll(r.Context(), user.ID, query)
+	posts, meta, err := app.store.Posts.GetAll(r.Context(), user.ID, query)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
@@ -213,7 +227,12 @@ func (app *application) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 		posts[i].User.AvatarURL = app.generateAssetURL(posts[i].User.AvatarID, "avatars")
 	}
 
-	if err = jsonResponse(w, http.StatusOK, posts); err != nil {
+	response := PaginatedPostsResponse{
+		Items: posts,
+		Meta: meta,
+	}
+
+	if err = jsonResponse(w, http.StatusOK, response); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

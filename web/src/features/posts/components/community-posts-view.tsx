@@ -5,7 +5,15 @@ import { useCommunityPosts } from "../api/get-community-posts";
 import { PostFilters } from "./post-filters";
 
 export const CommunityPostsView = () => {
-  const { posts = [], isLoading, isFetching, error } = useCommunityPosts();
+  const {
+    posts,
+    hasNextPage,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    lastElementRef,
+    error,
+  } = useCommunityPosts();
 
   if (error) {
     return (
@@ -18,7 +26,15 @@ export const CommunityPostsView = () => {
   return (
     <>
       <PostFilters />
-      {isLoading || isFetching ? <Loader /> : <PostsList posts={posts} />}
+      {isLoading || (isFetching && isFetchingNextPage) ? (
+        <Loader />
+      ) : (
+        <>
+          <PostsList posts={posts} />
+          {isFetchingNextPage ? <Loader /> : null}
+          {hasNextPage ? <div ref={lastElementRef}></div> : null}
+        </>
+      )}
     </>
   );
 };
